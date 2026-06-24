@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soufflet — D.E.S.-Tablatur fürs Diato</title>
+<script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay/build/opensheetmusicdisplay.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate/umd/index.js"></script>
+<style>
+  :root { --ink:#1c1a17; --paper:#fbfaf7; --line:#d8d2c6; --accent:#7a5c2e; --dim:#b9b2a4; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--paper); }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:17px; font-weight:600; letter-spacing:.2px; }
+  header p  { margin:2px 0 0; font-size:12px; color:#6b6457; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px 22px; align-items:flex-end; padding:12px 18px; border-bottom:1px solid var(--line); }
+  .ctl { display:flex; flex-direction:column; gap:3px; }
+  .ctl label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#7a7264; }
+  .ctl select, .ctl input[type=file] { font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:6px; background:#fff; max-width:250px; }
+  .ctl.row { flex-direction:row; align-items:center; gap:6px; }
+  button { font:inherit; padding:5px 12px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  #stage { position:relative; padding:8px 0 60px; }
+  #score { position:relative; }
+  #overlay { position:absolute; inset:0; pointer-events:none; }
+  .des { position:absolute; transform:translateX(-50%); white-space:nowrap; font:12px/1 "SFMono-Regular",Menlo,Consolas,monospace; pointer-events:auto; user-select:none; }
+  .des .cand { padding:1px 2px; border-radius:3px; cursor:pointer; color:var(--accent); }
+  .des .cand.pull { text-decoration:underline; }
+  .des .cand.sel  { background:#f0e6d2; color:#000; font-weight:600; }
+  .des.has-sel .cand:not(.sel) { color:var(--dim); }
+  .des .cand:hover { background:#efe9dc; }
+  #status { padding:6px 18px; font-size:12px; color:#6b6457; border-top:1px solid var(--line); position:fixed; bottom:0; left:0; right:0; background:var(--paper); }
+  .warn { color:#9a3b1b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Soufflet 🪗</h1>
+  <p>MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).</p>
+</header>
+
+<div class="controls">
+  <div class="ctl"><label>Partitur (.mxl / .musicxml / .xml)</label><input type="file" id="fileScore" accept=".mxl,.musicxml,.xml" /></div>
+  <div class="ctl"><label>Rechte Hand (Layout)</label><select id="rhSel"></select></div>
+  <div class="ctl"><label>Linke Hand / Bass (Layout)</label><select id="lhSel"></select></div>
+  <div class="ctl"><label>Eigenes .keyboard laden</label><input type="file" id="fileCustom" accept=".keyboard,.json" /></div>
+  <div class="ctl"><label>Spielweise</label>
+    <select id="typeJeu">
+      <option value="3" selected>Kreuzweise (Akkord bestimmt Richtung)</option>
+      <option value="1">Einreihig — G-Reihe</option>
+      <option value="2">Einreihig — C-Reihe</option>
+    </select></div>
+  <div class="ctl"><label>SOL-Akkord</label><select id="sensSol"><option value="3" selected>beide</option><option value="1">nur Zug</option><option value="2">nur Druck</option></select></div>
+  <div class="ctl"><label>FA-Akkord</label><select id="sensFa"><option value="3" selected>beide</option><option value="1">nur Zug</option><option value="2">nur Druck</option></select></div>
+  <div class="ctl row"><input type="checkbox" id="onePoss" /><label for="onePoss" style="text-transform:none">nur eine Möglichkeit</label></div>
+  <div class="ctl"><label>Zoom</label><select id="zoom"><option value="0.6">60%</option><option value="0.75">75%</option><option value="0.9" selected>90%</option><option value="1.1">110%</option></select></div>
+  <div class="ctl"><label>&nbsp;</label><button id="resetSel">Auswahl zurücksetzen</button></div>
+</div>
+
+<div id="stage"><div id="score"></div><div id="overlay"></div></div>
+<div id="status">Lade ein Stück, um zu starten.</div>
+
+<script type="module">
+import { parseKeyboard }   from "./des.mjs";
+import { parseLHKeyboard } from "./direction.mjs";
+import { transcribe }      from "./musicxml.mjs";
+import { loadKeyboards, rhEntries, lhEntries, getRH, getLH, fillSelect, detectKind } from "./layouts.mjs";
+
+const FALLBACK_RH = {"A3":"3T","A4":"7T/5'T","A5":"9'T/11T","B3":"4P/2'T","B4":"7P/6'T","B5":"10P/10'T","C4":"3'P/4T","C5":"6'P/8T","C6":"9'P","D3":"2P","D4":"5P/3'T","D5":"8P/7'T","D6":"11P","E3":"1'P","E4":"4'P/5T","E5":"7'P/9T","E6":"10'P","F3":"1'T","F3#":"2T","F4":"4'T","F4#":"6T","F5":"8'T","F5#":"10T","G3":"3P/2'P","G4":"6P/5'P","G5":"8'P/9P","description":"G/C 2R std"};
+const FALLBACK_LH = {"2sens":"-F-G-E#-","Pousse":"-C-E-B#-","Tire":"-A-D-","description":"G/C 8 Bass","tonalite":"GC"};
+
+const $ = id => document.getElementById(id);
+const statusEl = $("status"), overlay = $("overlay");
+const setStatus = (m, warn=false) => { statusEl.innerHTML = m; statusEl.classList.toggle("warn", warn); };
+
+let osmd = null, bundle = null;
+let rhKb = parseKeyboard(FALLBACK_RH);
+let lhKb = parseLHKeyboard(FALLBACK_LH);
+let currentXml = null;
+const selections = new Map();
+
+const options = () => ({
+  typeJeu: Number($("typeJeu").value), sensSol: Number($("sensSol").value),
+  sensFa: Number($("sensFa").value), onePossibility: $("onePoss").checked,
+});
+
+(async function init() {
+  try {
+    bundle = await loadKeyboards("./keyboards.json");
+    fillSelect($("rhSel"), rhEntries(bundle), bundle.defaults.rh);
+    fillSelect($("lhSel"), lhEntries(bundle), bundle.defaults.lh);
+    rhKb = getRH(bundle, bundle.defaults.rh);
+    lhKb = getLH(bundle, bundle.defaults.lh);
+    setStatus(`${bundle.index.length} Layouts geladen. Wähle ein Stück.`);
+  } catch (e) {
+    for (const [sel, txt] of [["rhSel","G/C 2R std"],["lhSel","G/C 8 Bass"]]) {
+      const o = document.createElement("option"); o.textContent = txt + " (eingebettet)"; $(sel).appendChild(o);
+    }
+    setStatus(`keyboards.json nicht erreichbar (${e.message}) — Fallback-Layouts aktiv. Tipp: über einen Webserver öffnen.`, true);
+  }
+})();
+
+async function readScoreFile(file) {
+  const buf = await file.arrayBuffer();
+  if (file.name.toLowerCase().endsWith(".mxl")) {
+    const files = fflate.unzipSync(new Uint8Array(buf));
+    const container = fflate.strFromU8(files["META-INF/container.xml"] || new Uint8Array());
+    const m = container.match(/full-path="([^"]+)"/);
+    const rootfile = m ? m[1] : Object.keys(files).find(k => /\.(musicxml|xml)$/i.test(k) && !k.startsWith("META-INF"));
+    if (!rootfile || !files[rootfile]) throw new Error("Keine MusicXML-Datei im .mxl gefunden.");
+    return fflate.strFromU8(files[rootfile]);
+  }
+  return new TextDecoder().decode(new Uint8Array(buf));
+}
+
+function ensureOsmd() {
+  if (osmd) return;
+  osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score", { autoResize:false, backend:"svg", drawingParameters:"default", drawPartNames:false });
+}
+
+async function renderAll() {
+  if (!osmd || !currentXml) return;
+  try { osmd.zoom = Number($("zoom").value); await osmd.render(); placeOverlay(); }
+  catch (e) { setStatus("Render-Fehler: " + e.message, true); console.error(e); }
+}
+
+function collectGraphicalNotes(staffIndex = 0) {
+  const out = [];
+  const ml = osmd.graphic?.measureList || [];
+  for (let m = 0; m < ml.length; m++) {
+    const gm = ml[m]?.[staffIndex];
+    if (!gm) continue;
+    for (const se of gm.staffEntries)
+      for (const ve of se.graphicalVoiceEntries)
+        for (const gn of ve.notes) { const src = gn.sourceNote; if (src && !src.isRest()) out.push({ se, gm }); }
+  }
+  return out;
+}
+
+function placeOverlay() {
+  overlay.innerHTML = "";
+  if (!osmd || !currentXml) return;
+  const U = 10 * osmd.zoom;
+  let tab;
+  try { tab = transcribe(rhKb, lhKb, currentXml, options()).tab.filter(e => !e.rest); }
+  catch (e) { setStatus("Transcribe-Fehler: " + e.message, true); return; }
+  const gnotes = collectGraphicalNotes(0);
+  const n = Math.min(gnotes.length, tab.length);
+  for (let i = 0; i < n; i++) {
+    const ev = tab[i];
+    if (!ev.des || ev.des.length === 0) continue;
+    const { se, gm } = gnotes[i];
+    const x = se.PositionAndShape.AbsolutePosition.x * U;
+    const yTop = gm.PositionAndShape.AbsolutePosition.y * U;
+    const div = document.createElement("div");
+    div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 16) + "px";
+    ev.des.forEach((d, ci) => {
+      const pull = d.endsWith("_");
+      const span = document.createElement("span");
+      span.className = "cand" + (pull ? " pull" : "");
+      span.textContent = d.replace(/_$/, "");
+      span.title = pull ? "Zug" : "Druck";
+      span.addEventListener("click", () => { selections.get(i) === ci ? selections.delete(i) : selections.set(i, ci); applySelection(div, i); });
+      div.appendChild(span);
+      if (ci < ev.des.length - 1) div.appendChild(document.createTextNode("\u2009"));
+    });
+    overlay.appendChild(div);
+    applySelection(div, i);
+  }
+  const warn = rhKb.warnings?.length ? ` · <span class="warn">${rhKb.warnings.length} übersprungene Token im RH-Layout</span>` : "";
+  setStatus(`${n} Noten · RH: ${rhKb.description} · LH: ${lhKb.description}${warn}`);
+}
+
+function applySelection(div, i) {
+  const sel = selections.get(i);
+  div.classList.toggle("has-sel", sel != null);
+  div.querySelectorAll(".cand").forEach((c, ci) => c.classList.toggle("sel", ci === sel));
+}
+
+$("fileScore").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { setStatus("Lade " + f.name + " …"); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); }
+  catch (err) { setStatus("Konnte Partitur nicht laden: " + err.message, true); console.error(err); }
+});
+$("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); } });
+$("lhSel").addEventListener("change", (e) => { if (bundle) { lhKb = getLH(bundle, e.target.value); selections.clear(); placeOverlay(); } });
+$("fileCustom").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const raw = JSON.parse(await f.text());
+    if (detectKind(raw) === "lh") { lhKb = parseLHKeyboard(raw); setStatus(`Eigenes LH-Layout: ${lhKb.description}`); }
+    else { rhKb = parseKeyboard(raw); setStatus(`Eigenes RH-Layout: ${rhKb.description}`); }
+    selections.clear(); placeOverlay();
+  } catch (err) { setStatus("Layout-Datei fehlerhaft: " + err.message, true); }
+});
+["typeJeu","sensSol","sensFa","onePoss"].forEach(id => $(id).addEventListener("change", () => { selections.clear(); placeOverlay(); }));
+$("zoom").addEventListener("change", renderAll);
+$("resetSel").addEventListener("click", () => { selections.clear(); placeOverlay(); });
+let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(renderAll, 150); });
+</script>
+</body>
+</html>

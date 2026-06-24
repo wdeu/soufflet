@@ -1,4 +1,4 @@
-// des.mjs — DiatonicTab RH-.keyboard -> D.E.S.-Tablatur (Kernel)
+// des.js — DiatonicTab RH-.keyboard -> D.E.S.-Tablatur (Kernel)
 // Reine Funktionen, keine Abhängigkeiten. Browser (ES-Modul) + Node.
 // -----------------------------------------------------------------------------
 // RH-.keyboard (JSON): { "<Ton><Oktave>[#]": "<Kand>[/<Kand>...]", ..., "description": ... }

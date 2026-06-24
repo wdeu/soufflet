@@ -10,21 +10,28 @@
   :root { --ink:#1c1a17; --paper:#fbfaf7; --line:#d8d2c6; --accent:#7a5c2e; --dim:#b9b2a4; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--paper); }
-  header { padding:14px 18px; border-bottom:1px solid var(--line); }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
   header h1 { margin:0; font-size:17px; font-weight:600; letter-spacing:.2px; }
   header p  { margin:2px 0 0; font-size:12px; color:#6b6457; }
+  .head-left { min-width:0; }
+  .flags { display:flex; gap:4px; flex:0 0 auto; }
+  .flag { font-size:20px; line-height:1; padding:3px 5px; border:1px solid transparent; border-radius:6px; background:none; cursor:pointer; opacity:.45; filter:grayscale(.3); }
+  .flag:hover { opacity:1; }
+  .flag.active { opacity:1; filter:none; border-color:var(--line); background:#fff; }
   .controls { display:flex; flex-wrap:wrap; gap:14px 22px; align-items:flex-end; padding:12px 18px; border-bottom:1px solid var(--line); }
   .ctl { display:flex; flex-direction:column; gap:3px; }
   .ctl label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#7a7264; }
-  .ctl select, .ctl input[type=file] { font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:6px; background:#fff; max-width:250px; }
-  .ctl.row { flex-direction:row; align-items:center; gap:6px; }
-  button { font:inherit; padding:5px 12px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
-  button:hover { border-color:var(--accent); }
+  .ctl select { font:inherit; height:32px; padding:0 8px; border:1px solid var(--line); border-radius:6px; background:#fff; max-width:250px; }
+  .filebtn, #resetSel { font:inherit; height:32px; line-height:30px; padding:0 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
+  .ctl select:hover, .filebtn:hover, #resetSel:hover { border-color:var(--accent); }
+  .filebtn { display:inline-block; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+  .filebtn.has-file { color:#000; font-weight:500; }
+  .ctl.row { flex-direction:row; align-items:center; height:32px; gap:6px; }
   #stage { position:relative; padding:8px 0 60px; }
   #score { position:relative; }
   #overlay { position:absolute; inset:0; pointer-events:none; }
-  .des { position:absolute; transform:translateX(-50%); white-space:nowrap; font:12px/1 "SFMono-Regular",Menlo,Consolas,monospace; pointer-events:auto; user-select:none; }
-  .des .cand { padding:1px 2px; border-radius:3px; cursor:pointer; color:var(--accent); }
+  .des { position:absolute; transform:translate(-0.5ch,-100%); display:flex; flex-direction:column; align-items:flex-start; gap:1px; font:12px/1.15 "SFMono-Regular",Menlo,Consolas,monospace; pointer-events:auto; user-select:none; }
+  .des .cand { padding:0 2px; border-radius:3px; cursor:pointer; color:var(--accent); background:var(--paper); box-shadow:0 0 2px 1.5px var(--paper); }
   .des .cand.pull { text-decoration:underline; }
   .des .cand.sel  { background:#f0e6d2; color:#000; font-weight:600; }
   .des.has-sel .cand:not(.sel) { color:var(--dim); }
@@ -35,68 +42,203 @@
 </head>
 <body>
 <header>
-  <h1>Soufflet 🪗</h1>
-  <p>MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).</p>
+  <div class="head-left"><h1>Soufflet 🪗</h1><p id="tagline"></p></div>
+  <div class="flags" id="flags">
+    <button class="flag" data-lang="de" title="Deutsch">🇩🇪</button>
+    <button class="flag" data-lang="fr" title="Français">🇫🇷</button>
+    <button class="flag" data-lang="it" title="Italiano">🇮🇹</button>
+    <button class="flag" data-lang="en" title="English">🇬🇧</button>
+  </div>
 </header>
 
 <div class="controls">
-  <div class="ctl"><label>Partitur (.mxl / .musicxml / .xml)</label><input type="file" id="fileScore" accept=".mxl,.musicxml,.xml" /></div>
-  <div class="ctl"><label>Rechte Hand (Layout)</label><select id="rhSel"></select></div>
-  <div class="ctl"><label>Linke Hand / Bass (Layout)</label><select id="lhSel"></select></div>
-  <div class="ctl"><label>Eigenes .keyboard laden</label><input type="file" id="fileCustom" accept=".keyboard,.json" /></div>
-  <div class="ctl"><label>Spielweise</label>
-    <select id="typeJeu">
-      <option value="3" selected>Kreuzweise (Akkord bestimmt Richtung)</option>
-      <option value="1">Einreihig — G-Reihe</option>
-      <option value="2">Einreihig — C-Reihe</option>
-    </select></div>
-  <div class="ctl"><label>SOL-Akkord</label><select id="sensSol"><option value="3" selected>beide</option><option value="1">nur Zug</option><option value="2">nur Druck</option></select></div>
-  <div class="ctl"><label>FA-Akkord</label><select id="sensFa"><option value="3" selected>beide</option><option value="1">nur Zug</option><option value="2">nur Druck</option></select></div>
-  <div class="ctl row"><input type="checkbox" id="onePoss" /><label for="onePoss" style="text-transform:none">nur eine Möglichkeit</label></div>
-  <div class="ctl"><label>Zoom</label><select id="zoom"><option value="0.6">60%</option><option value="0.75">75%</option><option value="0.9" selected>90%</option><option value="1.1">110%</option></select></div>
-  <div class="ctl"><label>&nbsp;</label><button id="resetSel">Auswahl zurücksetzen</button></div>
+  <div class="ctl"><label id="lblScore"></label><button type="button" class="filebtn" id="btnScore"></button><input type="file" id="fileScore" accept=".mxl,.musicxml,.xml" hidden /></div>
+  <div class="ctl"><label id="lblCustom"></label><button type="button" class="filebtn" id="btnCustom"></button><input type="file" id="fileCustom" accept=".keyboard,.json" hidden /></div>
+  <div class="ctl"><label id="lblRH"></label><select id="rhSel"></select></div>
+  <div class="ctl"><label id="lblLH"></label><select id="lhSel"></select></div>
+  <div class="ctl"><label id="lblPlay"></label>
+    <select id="typeJeu"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
+  <div class="ctl"><label id="lblSol"></label><select id="sensSol"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
+  <div class="ctl"><label id="lblFa"></label><select id="sensFa"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
+  <div class="ctl row"><input type="checkbox" id="onePoss" /><label for="onePoss" id="lblOne" style="text-transform:none"></label></div>
+  <div class="ctl"><label id="lblZoom"></label><select id="zoom"><option value="0.6">60%</option><option value="0.75">75%</option><option value="0.9" selected>90%</option><option value="1.1">110%</option></select></div>
+  <div class="ctl"><label>&nbsp;</label><button id="resetSel"></button></div>
 </div>
 
 <div id="stage"><div id="score"></div><div id="overlay"></div></div>
-<div id="status">Lade ein Stück, um zu starten.</div>
+<div id="status"></div>
 
 <script type="module">
-import { parseKeyboard }   from "./des.mjs";
-import { parseLHKeyboard } from "./direction.mjs";
-import { transcribe }      from "./musicxml.mjs";
-import { loadKeyboards, rhEntries, lhEntries, getRH, getLH, fillSelect, detectKind } from "./layouts.mjs";
+import { parseKeyboard }   from "./des.js";
+import { parseLHKeyboard } from "./direction.js";
+import { transcribe }      from "./musicxml.js";
+import { loadKeyboards, rhEntries, lhEntries, getRH, getLH, fillSelect, detectKind } from "./layouts.js";
 
-const FALLBACK_RH = {"A3":"3T","A4":"7T/5'T","A5":"9'T/11T","B3":"4P/2'T","B4":"7P/6'T","B5":"10P/10'T","C4":"3'P/4T","C5":"6'P/8T","C6":"9'P","D3":"2P","D4":"5P/3'T","D5":"8P/7'T","D6":"11P","E3":"1'P","E4":"4'P/5T","E5":"7'P/9T","E6":"10'P","F3":"1'T","F3#":"2T","F4":"4'T","F4#":"6T","F5":"8'T","F5#":"10T","G3":"3P/2'P","G4":"6P/5'P","G5":"8'P/9P","description":"G/C 2R std"};
-const FALLBACK_LH = {"2sens":"-F-G-E#-","Pousse":"-C-E-B#-","Tire":"-A-D-","description":"G/C 8 Bass","tonalite":"GC"};
+/* ---------- i18n (DE / FR / EN) ---------- */
+const STR = {
+  de: {
+    tagline: "MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).",
+    lbl_lang:"Sprache", lbl_score:"Partitur (.mxl / .musicxml / .xml)", lbl_rh:"Rechte Hand (Layout)", lbl_lh:"Linke Hand / Bass (Layout)",
+    lbl_custom:"Eigenes .keyboard laden", lbl_play:"Spielweise", lbl_sol:"SOL-Akkord", lbl_fa:"FA-Akkord", lbl_one:"nur eine Möglichkeit", lbl_zoom:"Zoom",
+    play_cross:"Kreuzweise (Akkord bestimmt Richtung)", play_g:"Einreihig — G-Reihe", play_c:"Einreihig — C-Reihe",
+    sens_both:"beide", sens_pull:"nur Zug", sens_push:"nur Druck", btn_reset:"Alles zurücksetzen", file_choose:"Datei auswählen",
+    tip_pull:"Zug", tip_push:"Druck",
+    st_start:"Lade ein Stück, um zu starten.",
+    st_loaded:n=>`${n} Layouts geladen. Wähle ein Stück.`,
+    st_loading:name=>`Lade ${name} …`,
+    st_score_err:m=>`Konnte Partitur nicht laden: ${m}`,
+    st_notes:(n,rh,lh)=>`${n} Noten · RH: ${rh} · LH: ${lh}`,
+    st_warn:n=>` · ${n} übersprungene Token im RH-Layout`,
+    st_custom_lh:d=>`Eigenes LH-Layout: ${d}`, st_custom_rh:d=>`Eigenes RH-Layout: ${d}`,
+    st_layout_err:m=>`Layout-Datei fehlerhaft: ${m}`,
+    st_bundle_err:m=>`keyboards.json nicht erreichbar (${m}) — Fallback-Layouts aktiv. Tipp: über einen Webserver öffnen.`,
+    st_render_err:m=>`Render-Fehler: ${m}`, st_transcribe_err:m=>`Transcribe-Fehler: ${m}`,
+  },
+  fr: {
+    tagline: "MusicXML / .mxl en entrée → tablature à boutons au-dessus des notes. Tout reste local dans le navigateur. Touche une variante pour la choisir. · Continuation libre de DiatonicTab (J.-M. Bencetti, GPL-2.0).",
+    lbl_lang:"Langue", lbl_score:"Partition (.mxl / .musicxml / .xml)", lbl_rh:"Main droite (plan)", lbl_lh:"Main gauche / basses (plan)",
+    lbl_custom:"Charger un .keyboard", lbl_play:"Jeu", lbl_sol:"Accord SOL", lbl_fa:"Accord FA", lbl_one:"une seule possibilité", lbl_zoom:"Zoom",
+    play_cross:"Croisé (l'accord détermine le sens)", play_g:"En ligne — rang de G", play_c:"En ligne — rang de C",
+    sens_both:"les deux", sens_pull:"tiré seul", sens_push:"poussé seul", btn_reset:"Tout réinitialiser", file_choose:"Choisir un fichier",
+    tip_pull:"Tiré", tip_push:"Poussé",
+    st_start:"Charge un morceau pour commencer.",
+    st_loaded:n=>`${n} plans chargés. Choisis un morceau.`,
+    st_loading:name=>`Chargement de ${name} …`,
+    st_score_err:m=>`Impossible de charger la partition : ${m}`,
+    st_notes:(n,rh,lh)=>`${n} notes · MD : ${rh} · MG : ${lh}`,
+    st_warn:n=>` · ${n} jetons ignorés dans le plan MD`,
+    st_custom_lh:d=>`Plan MG perso : ${d}`, st_custom_rh:d=>`Plan MD perso : ${d}`,
+    st_layout_err:m=>`Fichier de plan invalide : ${m}`,
+    st_bundle_err:m=>`keyboards.json inaccessible (${m}) — plans de secours actifs. Astuce : ouvrir via un serveur web.`,
+    st_render_err:m=>`Erreur de rendu : ${m}`, st_transcribe_err:m=>`Erreur de transcription : ${m}`,
+  },
+  en: {
+    tagline: "MusicXML / .mxl in → button tablature above the notes. Everything stays local in the browser. Tap a variant to choose it. · Open continuation of DiatonicTab (J.-M. Bencetti, GPL-2.0).",
+    lbl_lang:"Language", lbl_score:"Score (.mxl / .musicxml / .xml)", lbl_rh:"Right hand (layout)", lbl_lh:"Left hand / bass (layout)",
+    lbl_custom:"Load a .keyboard", lbl_play:"Playing style", lbl_sol:"SOL chord", lbl_fa:"FA chord", lbl_one:"one option only", lbl_zoom:"Zoom",
+    play_cross:"Cross-row (chord sets direction)", play_g:"Single row — G row", play_c:"Single row — C row",
+    sens_both:"both", sens_pull:"pull only", sens_push:"push only", btn_reset:"Reset everything", file_choose:"Choose file",
+    tip_pull:"Pull", tip_push:"Push",
+    st_start:"Load a piece to start.",
+    st_loaded:n=>`${n} layouts loaded. Choose a piece.`,
+    st_loading:name=>`Loading ${name} …`,
+    st_score_err:m=>`Couldn't load the score: ${m}`,
+    st_notes:(n,rh,lh)=>`${n} notes · RH: ${rh} · LH: ${lh}`,
+    st_warn:n=>` · ${n} skipped tokens in RH layout`,
+    st_custom_lh:d=>`Custom LH layout: ${d}`, st_custom_rh:d=>`Custom RH layout: ${d}`,
+    st_layout_err:m=>`Invalid layout file: ${m}`,
+    st_bundle_err:m=>`keyboards.json unreachable (${m}) — fallback layouts active. Tip: open via a web server.`,
+    st_render_err:m=>`Render error: ${m}`, st_transcribe_err:m=>`Transcribe error: ${m}`,
+  },
+  it: {
+    tagline: "MusicXML / .mxl in entrata → intavolatura a bottoni sopra le note. Tutto resta locale nel browser. Tocca una variante per sceglierla. · Continuazione libera di DiatonicTab (J.-M. Bencetti, GPL-2.0).",
+    lbl_lang:"Lingua", lbl_score:"Partitura (.mxl / .musicxml / .xml)", lbl_rh:"Mano destra (schema)", lbl_lh:"Mano sinistra / bassi (schema)",
+    lbl_custom:"Carica un .keyboard", lbl_play:"Esecuzione", lbl_sol:"Accordo SOL", lbl_fa:"Accordo FA", lbl_one:"una sola possibilità", lbl_zoom:"Zoom",
+    play_cross:"Incrociato (l'accordo determina il verso)", play_g:"In fila — fila di G", play_c:"In fila — fila di C",
+    sens_both:"entrambi", sens_pull:"solo tirando", sens_push:"solo spingendo", btn_reset:"Ripristina tutto", file_choose:"Scegli un file",
+    tip_pull:"Tirando", tip_push:"Spingendo",
+    st_start:"Carica un brano per iniziare.",
+    st_loaded:n=>`${n} schemi caricati. Scegli un brano.`,
+    st_loading:name=>`Caricamento di ${name} …`,
+    st_score_err:m=>`Impossibile caricare la partitura: ${m}`,
+    st_notes:(n,rh,lh)=>`${n} note · MD: ${rh} · MS: ${lh}`,
+    st_warn:n=>` · ${n} token ignorati nello schema MD`,
+    st_custom_lh:d=>`Schema MS personalizzato: ${d}`, st_custom_rh:d=>`Schema MD personalizzato: ${d}`,
+    st_layout_err:m=>`File di schema non valido: ${m}`,
+    st_bundle_err:m=>`keyboards.json non raggiungibile (${m}) — schemi di riserva attivi. Suggerimento: aprire tramite un server web.`,
+    st_render_err:m=>`Errore di rendering: ${m}`, st_transcribe_err:m=>`Errore di trascrizione: ${m}`,
+  },
+};
+const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
+let lang = "de";
+const L = () => STR[lang];
 
 const $ = id => document.getElementById(id);
 const statusEl = $("status"), overlay = $("overlay");
 const setStatus = (m, warn=false) => { statusEl.innerHTML = m; statusEl.classList.toggle("warn", warn); };
 
+function applyI18n() {
+  const T = L();
+  document.documentElement.lang = lang;
+  $("tagline").textContent = T.tagline;
+  $("lblScore").textContent = T.lbl_score;
+  $("lblRH").textContent = T.lbl_rh; $("lblLH").textContent = T.lbl_lh; $("lblCustom").textContent = T.lbl_custom;
+  $("lblPlay").textContent = T.lbl_play; $("lblSol").textContent = T.lbl_sol; $("lblFa").textContent = T.lbl_fa;
+  $("lblOne").textContent = T.lbl_one; $("lblZoom").textContent = T.lbl_zoom;
+  const pj = $("typeJeu"); pj.options[0].textContent = T.play_cross; pj.options[1].textContent = T.play_g; pj.options[2].textContent = T.play_c;
+  for (const id of ["sensSol","sensFa"]) { const s = $(id); s.options[0].textContent = T.sens_both; s.options[1].textContent = T.sens_pull; s.options[2].textContent = T.sens_push; }
+  $("resetSel").textContent = T.btn_reset;
+  for (const id of ["btnScore","btnCustom"]) { const b = $(id); if (!b.classList.contains("has-file")) b.textContent = T.file_choose; }
+  document.querySelectorAll(".flag").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+}
+
+/* ---------- Persistenz (localStorage) ---------- */
+const LS_KEY = "soufflet.v1";
+function saveState() {
+  const base = {
+    lang, rh: $("rhSel").value, lh: $("lhSel").value,
+    typeJeu: $("typeJeu").value, sensSol: $("sensSol").value, sensFa: $("sensFa").value,
+    onePoss: $("onePoss").checked, zoom: $("zoom").value,
+    scoreName: $("btnScore").classList.contains("has-file") ? $("btnScore").textContent : "",
+    selections: Object.fromEntries(selections),
+  };
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ ...base, xml: currentXml || "" })); }
+  catch { try { localStorage.setItem(LS_KEY, JSON.stringify({ ...base, xml: "" })); } catch {} }   // Quota: ohne Partitur
+}
+const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
+
 let osmd = null, bundle = null;
-let rhKb = parseKeyboard(FALLBACK_RH);
-let lhKb = parseLHKeyboard(FALLBACK_LH);
+let rhKb = parseKeyboard(FALLBACK_RH_OBJ());
+let lhKb = parseLHKeyboard(FALLBACK_LH_OBJ());
 let currentXml = null;
 const selections = new Map();
+
+function FALLBACK_RH_OBJ() { return {"A3":"3T","A4":"7T/5'T","A5":"9'T/11T","B3":"4P/2'T","B4":"7P/6'T","B5":"10P/10'T","C4":"3'P/4T","C5":"6'P/8T","C6":"9'P","D3":"2P","D4":"5P/3'T","D5":"8P/7'T","D6":"11P","E3":"1'P","E4":"4'P/5T","E5":"7'P/9T","E6":"10'P","F3":"1'T","F3#":"2T","F4":"4'T","F4#":"6T","F5":"8'T","F5#":"10T","G3":"3P/2'P","G4":"6P/5'P","G5":"8'P/9P","description":"G/C 2R std"}; }
+function FALLBACK_LH_OBJ() { return {"2sens":"-F-G-E#-","Pousse":"-C-E-B#-","Tire":"-A-D-","description":"G/C 8 Bass","tonalite":"GC"}; }
 
 const options = () => ({
   typeJeu: Number($("typeJeu").value), sensSol: Number($("sensSol").value),
   sensFa: Number($("sensFa").value), onePossibility: $("onePoss").checked,
 });
 
+/* ---------- Init: Sprache + Persistenz wiederherstellen ---------- */
 (async function init() {
+  const saved = loadState();
+  const urlLang = new URLSearchParams(location.search).get("lang");
+  lang = pickLang(urlLang || saved?.lang || navigator.language);
+  applyI18n();
+
+  if (saved) {
+    if (saved.typeJeu) $("typeJeu").value = saved.typeJeu;
+    if (saved.sensSol) $("sensSol").value = saved.sensSol;
+    if (saved.sensFa)  $("sensFa").value  = saved.sensFa;
+    if (typeof saved.onePoss === "boolean") $("onePoss").checked = saved.onePoss;
+    if (saved.zoom) $("zoom").value = saved.zoom;
+    if (saved.selections) for (const [k,v] of Object.entries(saved.selections)) selections.set(Number(k), v);
+  }
+
   try {
     bundle = await loadKeyboards("./keyboards.json");
-    fillSelect($("rhSel"), rhEntries(bundle), bundle.defaults.rh);
-    fillSelect($("lhSel"), lhEntries(bundle), bundle.defaults.lh);
-    rhKb = getRH(bundle, bundle.defaults.rh);
-    lhKb = getLH(bundle, bundle.defaults.lh);
-    setStatus(`${bundle.index.length} Layouts geladen. Wähle ein Stück.`);
+    const rhId = (saved?.rh && bundle.rh[saved.rh]) ? saved.rh : bundle.defaults.rh;
+    const lhId = (saved?.lh && bundle.lh[saved.lh]) ? saved.lh : bundle.defaults.lh;
+    fillSelect($("rhSel"), rhEntries(bundle), rhId);
+    fillSelect($("lhSel"), lhEntries(bundle), lhId);
+    rhKb = getRH(bundle, rhId); lhKb = getLH(bundle, lhId);
+    setStatus(L().st_loaded(bundle.index.length));
   } catch (e) {
     for (const [sel, txt] of [["rhSel","G/C 2R std"],["lhSel","G/C 8 Bass"]]) {
-      const o = document.createElement("option"); o.textContent = txt + " (eingebettet)"; $(sel).appendChild(o);
+      const o = document.createElement("option"); o.textContent = txt + " (fallback)"; $(sel).appendChild(o);
     }
-    setStatus(`keyboards.json nicht erreichbar (${e.message}) — Fallback-Layouts aktiv. Tipp: über einen Webserver öffnen.`, true);
+    setStatus(L().st_bundle_err(e.message), true);
+  }
+
+  // gespeicherte Partitur wiederherstellen (Selektionen sind schon gesetzt -> Overlay übernimmt sie)
+  if (saved?.xml) {
+    try {
+      currentXml = saved.xml; ensureOsmd(); await osmd.load(currentXml);
+      if (saved.scoreName) { const b = $("btnScore"); b.textContent = saved.scoreName; b.title = saved.scoreName; b.classList.add("has-file"); }
+      await renderAll();
+    } catch (e) { setStatus(L().st_score_err(e.message), true); }
   }
 })();
 
@@ -121,7 +263,7 @@ function ensureOsmd() {
 async function renderAll() {
   if (!osmd || !currentXml) return;
   try { osmd.zoom = Number($("zoom").value); await osmd.render(); placeOverlay(); }
-  catch (e) { setStatus("Render-Fehler: " + e.message, true); console.error(e); }
+  catch (e) { setStatus(L().st_render_err(e.message), true); console.error(e); }
 }
 
 function collectGraphicalNotes(staffIndex = 0) {
@@ -143,7 +285,7 @@ function placeOverlay() {
   const U = 10 * osmd.zoom;
   let tab;
   try { tab = transcribe(rhKb, lhKb, currentXml, options()).tab.filter(e => !e.rest); }
-  catch (e) { setStatus("Transcribe-Fehler: " + e.message, true); return; }
+  catch (e) { setStatus(L().st_transcribe_err(e.message), true); return; }
   const gnotes = collectGraphicalNotes(0);
   const n = Math.min(gnotes.length, tab.length);
   for (let i = 0; i < n; i++) {
@@ -153,22 +295,24 @@ function placeOverlay() {
     const x = se.PositionAndShape.AbsolutePosition.x * U;
     const yTop = gm.PositionAndShape.AbsolutePosition.y * U;
     const div = document.createElement("div");
-    div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 16) + "px";
+    div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 4) + "px";
     ev.des.forEach((d, ci) => {
       const pull = d.endsWith("_");
       const span = document.createElement("span");
       span.className = "cand" + (pull ? " pull" : "");
       span.textContent = d.replace(/_$/, "");
-      span.title = pull ? "Zug" : "Druck";
-      span.addEventListener("click", () => { selections.get(i) === ci ? selections.delete(i) : selections.set(i, ci); applySelection(div, i); });
+      span.title = pull ? L().tip_pull : L().tip_push;
+      span.addEventListener("click", () => {
+        selections.get(i) === ci ? selections.delete(i) : selections.set(i, ci);
+        applySelection(div, i); saveState();
+      });
       div.appendChild(span);
-      if (ci < ev.des.length - 1) div.appendChild(document.createTextNode("\u2009"));
     });
     overlay.appendChild(div);
     applySelection(div, i);
   }
-  const warn = rhKb.warnings?.length ? ` · <span class="warn">${rhKb.warnings.length} übersprungene Token im RH-Layout</span>` : "";
-  setStatus(`${n} Noten · RH: ${rhKb.description} · LH: ${lhKb.description}${warn}`);
+  const warn = rhKb.warnings?.length ? `<span class="warn">${L().st_warn(rhKb.warnings.length)}</span>` : "";
+  setStatus(L().st_notes(n, rhKb.description, lhKb.description) + warn);
 }
 
 function applySelection(div, i) {
@@ -177,25 +321,57 @@ function applySelection(div, i) {
   div.querySelectorAll(".cand").forEach((c, ci) => c.classList.toggle("sel", ci === sel));
 }
 
-$("fileScore").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  try { setStatus("Lade " + f.name + " …"); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); }
-  catch (err) { setStatus("Konnte Partitur nicht laden: " + err.message, true); console.error(err); }
+function wireFileButton(btnId, inputId, onPick) {
+  const btn = $(btnId), inp = $(inputId);
+  btn.addEventListener("click", () => inp.click());            // Klick auf Button/Name -> Finder
+  inp.addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    btn.textContent = f.name; btn.title = f.name; btn.classList.add("has-file");
+    await onPick(f);
+  });
+}
+
+wireFileButton("btnScore", "fileScore", async (f) => {
+  try { setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); }
+  catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 });
-$("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); } });
-$("lhSel").addEventListener("change", (e) => { if (bundle) { lhKb = getLH(bundle, e.target.value); selections.clear(); placeOverlay(); } });
-$("fileCustom").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; if (!f) return;
+$("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
+$("lhSel").addEventListener("change", (e) => { if (bundle) { lhKb = getLH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
+wireFileButton("btnCustom", "fileCustom", async (f) => {
   try {
     const raw = JSON.parse(await f.text());
-    if (detectKind(raw) === "lh") { lhKb = parseLHKeyboard(raw); setStatus(`Eigenes LH-Layout: ${lhKb.description}`); }
-    else { rhKb = parseKeyboard(raw); setStatus(`Eigenes RH-Layout: ${rhKb.description}`); }
-    selections.clear(); placeOverlay();
-  } catch (err) { setStatus("Layout-Datei fehlerhaft: " + err.message, true); }
+    if (detectKind(raw) === "lh") { lhKb = parseLHKeyboard(raw); setStatus(L().st_custom_lh(lhKb.description)); }
+    else { rhKb = parseKeyboard(raw); setStatus(L().st_custom_rh(rhKb.description)); }
+    selections.clear(); placeOverlay(); saveState();
+  } catch (err) { setStatus(L().st_layout_err(err.message), true); }
 });
-["typeJeu","sensSol","sensFa","onePoss"].forEach(id => $(id).addEventListener("change", () => { selections.clear(); placeOverlay(); }));
-$("zoom").addEventListener("change", renderAll);
-$("resetSel").addEventListener("click", () => { selections.clear(); placeOverlay(); });
+["typeJeu","sensSol","sensFa","onePoss"].forEach(id => $(id).addEventListener("change", () => { selections.clear(); placeOverlay(); saveState(); }));
+$("zoom").addEventListener("change", () => { renderAll().then(saveState); });
+
+$("flags").addEventListener("click", (e) => {
+  const b = e.target.closest(".flag"); if (!b) return;
+  lang = b.dataset.lang; applyI18n();
+  if (currentXml) placeOverlay(); else setStatus(bundle ? L().st_loaded(bundle.index.length) : L().st_start);
+  saveState();
+});
+
+/* ---------- Alles zurücksetzen (Wüste Gobi) ---------- */
+$("resetSel").addEventListener("click", () => {
+  try { localStorage.removeItem(LS_KEY); } catch {}
+  selections.clear(); currentXml = null;
+  $("typeJeu").value = "3"; $("sensSol").value = "3"; $("sensFa").value = "3";
+  $("onePoss").checked = false; $("zoom").value = "0.9";
+  if (bundle) {
+    $("rhSel").value = bundle.defaults.rh; $("lhSel").value = bundle.defaults.lh;
+    rhKb = getRH(bundle, bundle.defaults.rh); lhKb = getLH(bundle, bundle.defaults.lh);
+  }
+  for (const id of ["btnScore","btnCustom"]) { const b = $(id); b.classList.remove("has-file"); b.title = ""; b.textContent = L().file_choose; }
+  $("fileScore").value = ""; $("fileCustom").value = "";   // damit dieselbe Datei erneut wählbar bleibt
+  overlay.innerHTML = "";
+  if (osmd) { try { osmd.clear(); } catch { $("score").innerHTML = ""; } }
+  setStatus(bundle ? L().st_loaded(bundle.index.length) : L().st_start);
+});
+
 let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(renderAll, 150); });
 </script>
 </body>

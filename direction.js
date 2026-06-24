@@ -1,4 +1,4 @@
-// direction.mjs — Akkord -> Balgrichtung -> Kandidaten filtern.
+// direction.js — Akkord -> Balgrichtung -> Kandidaten filtern.
 // Portiert aus DiatonicTab v1.06.06 (J.-M. Bencetti, GPL-2.0), Zeilen ~760-895.
 // -----------------------------------------------------------------------------
 // Die Richtung ist DATENGETRIEBEN: sie kommt aus der LH-(Bass-)Datei, nicht aus
@@ -9,7 +9,7 @@
 // Reihenfolge wie im Plugin: Tire vor Pousse vor 2sens.
 // -----------------------------------------------------------------------------
 
-import { buttonToDESText, pitchToKey } from "./des.mjs";
+import { buttonToDESText, pitchToKey } from "./des.js";
 
 export function parseLHKeyboard(jsonText) {
   const raw = typeof jsonText === "string" ? JSON.parse(jsonText) : jsonText;

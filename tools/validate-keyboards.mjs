@@ -2,8 +2,8 @@
 // Aufruf aus dem Repo-Root:  node tools/validate-keyboards.mjs
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { parseKeyboard }   from "../des.mjs";
-import { parseLHKeyboard } from "../direction.mjs";
+import { parseKeyboard }   from "../des.js";
+import { parseLHKeyboard } from "../direction.js";
 
 const srcDir = fileURLToPath(new URL("../keyboards/", import.meta.url));
 const files  = fs.readdirSync(srcDir).filter(f => f.endsWith(".keyboard")).sort();

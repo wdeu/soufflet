@@ -50,10 +50,10 @@ Ou utiliser le script Raycast **Soufflet · Serve**.
 ```
 soufflet/
 ├─ index.html              App (OSMD + fflate via CDN; siehe Vendoring unten)
-├─ des.mjs                 Kernel: RH-.keyboard parsen, Knopf → D.E.S.
-├─ direction.mjs           Akkord → Balgrichtung (aus LH-Bass-Datei), Filter
-├─ musicxml.mjs            Mini-XML-Parser + Melodie-mit-Akkorden + transcribe()
-├─ layouts.mjs             Dropdown-Datenmodell (lädt keyboards.json, 1 Fetch)
+├─ des.js                 Kernel: RH-.keyboard parsen, Knopf → D.E.S.
+├─ direction.js           Akkord → Balgrichtung (aus LH-Bass-Datei), Filter
+├─ musicxml.js            Mini-XML-Parser + Melodie-mit-Akkorden + transcribe()
+├─ layouts.js             Dropdown-Datenmodell (lädt keyboards.json, 1 Fetch)
 ├─ keyboards.json          Build-Artefakt: alle Layouts + Index (eingecheckt)
 ├─ keyboards/              Quell-Layouts (.keyboard) — Community-Beiträge hierher
 │  ├─ RH_*.keyboard (17)   rechte Hand / main droite

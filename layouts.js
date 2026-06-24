@@ -1,8 +1,8 @@
-// layouts.mjs — Dropdown-Datenmodell für das keyboards.json-Bündel.
+// layouts.js — Dropdown-Datenmodell für das keyboards.json-Bündel.
 // EIN Fetch lädt alle 26 Layouts. Geparst wird über dieselben Parser (Source of Truth).
 // -----------------------------------------------------------------------------
-import { parseKeyboard }   from "./des.mjs";
-import { parseLHKeyboard } from "./direction.mjs";
+import { parseKeyboard }   from "./des.js";
+import { parseLHKeyboard } from "./direction.js";
 
 export async function loadKeyboards(url = "./keyboards.json") {
   const res = await fetch(url);

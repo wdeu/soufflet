@@ -1,10 +1,10 @@
-// musicxml.mjs — MusicXML -> Melodie-mit-Akkorden-Strom -> D.E.S. (über resolve()).
+// musicxml.js — MusicXML -> Melodie-mit-Akkorden-Strom -> D.E.S. (über resolve()).
 // Abhängigkeitsfrei: eigener Mini-XML-Parser, läuft in Node und im Browser gleich.
 // .mxl (ZIP) wird NICHT hier entpackt — siehe loadMxl-Hinweis unten; readMusicXML
 // erwartet bereits den entpackten MusicXML-Text (string).
 // -----------------------------------------------------------------------------
 
-import { resolve } from "./direction.mjs";
+import { resolve } from "./direction.js";
 
 // ---------- 1. Mini-XML-Parser ----------------------------------------------
 const ENT = { amp:"&", lt:"<", gt:">", quot:'"', apos:"'" };

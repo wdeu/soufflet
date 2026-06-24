@@ -1,0 +1,8 @@
+{
+  "name": "soufflet",
+  "version": "1.0.0",
+  "description": "Diatonic accordion tablature (D.E.S.) from MusicXML — local, in the browser.",
+  "type": "module",
+  "license": "GPL-2.0-only",
+  "private": true
+}

@@ -10,11 +10,11 @@
   :root { --ink:#1c1a17; --paper:#fbfaf7; --line:#d8d2c6; --accent:#7a5c2e; --dim:#b9b2a4; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--paper); }
-  header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); }
+  header::after { content:""; display:table; clear:both; }
   header h1 { margin:0; font-size:17px; font-weight:600; letter-spacing:.2px; }
   header p  { margin:2px 0 0; font-size:12px; color:#6b6457; }
-  .head-left { min-width:0; }
-  .flags { display:flex; gap:4px; flex:0 0 auto; }
+  .flags { float:right; display:flex; gap:4px; margin:0 0 6px 22px; }
   .flag { font-size:20px; line-height:1; padding:3px 5px; border:1px solid transparent; border-radius:6px; background:none; cursor:pointer; opacity:.45; filter:grayscale(.3); }
   .flag:hover { opacity:1; }
   .flag.active { opacity:1; filter:none; border-color:var(--line); background:#fff; }
@@ -42,18 +42,19 @@
 </head>
 <body>
 <header>
-  <div class="head-left"><h1>Soufflet 🪗</h1><p id="tagline"></p></div>
   <div class="flags" id="flags">
     <button class="flag" data-lang="de" title="Deutsch">🇩🇪</button>
     <button class="flag" data-lang="fr" title="Français">🇫🇷</button>
     <button class="flag" data-lang="it" title="Italiano">🇮🇹</button>
     <button class="flag" data-lang="en" title="English">🇬🇧</button>
   </div>
+  <h1>Soufflet 🪗</h1>
+  <p id="tagline"></p>
 </header>
 
 <div class="controls">
-  <div class="ctl"><label id="lblScore"></label><button type="button" class="filebtn" id="btnScore"></button><input type="file" id="fileScore" accept=".mxl,.musicxml,.xml" hidden /></div>
-  <div class="ctl"><label id="lblCustom"></label><button type="button" class="filebtn" id="btnCustom"></button><input type="file" id="fileCustom" accept=".keyboard,.json" hidden /></div>
+  <div class="ctl"><label id="lblScore"></label><button type="button" class="filebtn" id="btnScore"></button><input type="file" id="fileScore" hidden /></div>
+  <div class="ctl"><label id="lblCustom"></label><button type="button" class="filebtn" id="btnCustom"></button><input type="file" id="fileCustom" hidden /></div>
   <div class="ctl"><label id="lblRH"></label><select id="rhSel"></select></div>
   <div class="ctl"><label id="lblLH"></label><select id="lhSel"></select></div>
   <div class="ctl"><label id="lblPlay"></label>

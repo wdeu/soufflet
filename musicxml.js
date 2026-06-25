@@ -1,4 +1,4 @@
-// musicxml.js — MusicXML -> Melodie-mit-Akkorden-Strom -> D.E.S. (über resolve()).
+// musicxml.mjs — MusicXML -> Melodie-mit-Akkorden-Strom -> D.E.S. (über resolve()).
 // Abhängigkeitsfrei: eigener Mini-XML-Parser, läuft in Node und im Browser gleich.
 // .mxl (ZIP) wird NICHT hier entpackt — siehe loadMxl-Hinweis unten; readMusicXML
 // erwartet bereits den entpackten MusicXML-Text (string).
@@ -97,11 +97,12 @@ export function melodyWithChords(xmlString, options = {}) {
 
   const events = [];
   let currentChord = null;
+  let chordJustChanged = false;   // true für das eine Event, bei dem OSMD den Akkordsymbol-Text zeichnet
   let mIndex = 0;
   for (const measure of kids(part, "measure")) {
     mIndex++;
     for (const el of measure.children) {
-      if (el.tag === "harmony") { currentChord = harmonyToSymbol(el); continue; }
+      if (el.tag === "harmony") { currentChord = harmonyToSymbol(el); chordJustChanged = true; continue; }
       if (el.tag !== "note") continue;
       const voice = txt(kid(el, "voice"));
       const staff = txt(kid(el, "staff"));
@@ -109,7 +110,7 @@ export function melodyWithChords(xmlString, options = {}) {
       if (options.staff && staff && staff !== String(options.staff)) continue;
       const isRest = !!kid(el, "rest");
       const inChord = !!kid(el, "chord");          // mit Vornote gestapelt (Mehrklang)
-      if (isRest) { if (options.includeRests) events.push({ measure: mIndex, rest: true, chord: currentChord }); continue; }
+      if (isRest) { if (options.includeRests) events.push({ measure: mIndex, rest: true, chord: currentChord, chordChange: chordJustChanged }); chordJustChanged = false; continue; }
       const pitch = kid(el, "pitch");
       if (!pitch) continue;                        // unpitched/percussion überspringen
       events.push({
@@ -118,9 +119,11 @@ export function melodyWithChords(xmlString, options = {}) {
         alter: Number(txt(kid(pitch, "alter")) || 0),
         octave: Number(txt(kid(pitch, "octave"))),
         chord: currentChord,
+        chordChange: chordJustChanged,
         inChord, voice, staff,
         duration: Number(txt(kid(el, "duration")) || 0),
       });
+      chordJustChanged = false;
     }
   }
   return { title: txt(findFirst(score, "movement-title")) || txt(findFirst(score, "credit-words")),

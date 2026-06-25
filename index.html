@@ -384,8 +384,9 @@ function placeOverlay() {
     const { se, gm } = gnotes[i];
     const x = se.PositionAndShape.AbsolutePosition.x * U;
     const yTop = gm.PositionAndShape.AbsolutePosition.y * U;
+    const chordHeadroom = ev.chordChange ? 2.2 * U : 0;   // weicht über Akkordsymbolen (z.B. "Am") nach oben aus
     const div = document.createElement("div");
-    div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 4) + "px";
+    div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 4 - chordHeadroom) + "px";
     ev.des.forEach((d, ci) => {
       const pull = d.endsWith("_");
       const span = document.createElement("span");

@@ -4,6 +4,30 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Soufflet — D.E.S.-Tablatur fürs Diato</title>
+
+<!-- Favicon & Homescreen -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#1c1a17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soufflet">
+
+<!-- Sharing: Open Graph (Mail/Messages/Slack…) + Twitter Card -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Soufflet — D.E.S.-Tablatur fürs Diato">
+<meta property="og:description" content="MusicXML zu Knopf-Tablatur fürs diatonische Akkordeon — direkt über den Noten, im Browser. 26 Layouts, FR/DE/IT/EN.">
+<meta property="og:image" content="https://wdeu.github.io/soufflet/og-image.png">
+<meta property="og:url" content="https://wdeu.github.io/soufflet/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Soufflet — D.E.S.-Tablatur fürs Diato">
+<meta name="twitter:description" content="MusicXML zu Knopf-Tablatur fürs diatonische Akkordeon — lokal im Browser.">
+<meta name="twitter:image" content="https://wdeu.github.io/soufflet/og-image.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay/build/opensheetmusicdisplay.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate/umd/index.js"></script>
 <style>
@@ -27,6 +51,23 @@
   .filebtn { display:inline-block; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
   .filebtn.has-file { color:#000; font-weight:500; }
   .ctl.row { flex-direction:row; align-items:center; height:32px; gap:6px; }
+  .panel-toggle { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 18px; border-bottom:1px solid var(--line); background:#f4f1ea; cursor:pointer; user-select:none; }
+  .panel-toggle .pt-label { font-size:12px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .panel-toggle .pt-chip { font-size:11px; color:#6b6457; font-weight:400; }
+  .panel-toggle .pt-arrow { font-size:11px; color:var(--accent); transition:transform .15s; }
+  .panel-toggle.collapsed .pt-arrow { transform:rotate(-90deg); }
+  .controls { max-height:1000px; overflow:hidden; transition:max-height .18s ease, padding .18s ease, opacity .15s ease; }
+  .controls.collapsed { max-height:0; padding-top:0; padding-bottom:0; border-bottom:none; opacity:0; }
+  .share-row { display:flex; align-items:center; gap:10px; padding:8px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .share-row button { font:inherit; height:30px; padding:0 12px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; display:flex; align-items:center; gap:6px; }
+  .share-row button:hover { border-color:var(--accent); }
+  #qrPop { position:fixed; inset:0; background:rgba(28,26,23,.55); display:none; align-items:center; justify-content:center; z-index:50; }
+  #qrPop.open { display:flex; }
+  #qrPop .qr-card { background:#fff; border-radius:14px; padding:20px; text-align:center; max-width:260px; }
+  #qrPop canvas { display:block; margin:0 auto 10px; }
+  #qrPop button { margin-top:8px; font:inherit; padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
+  footer.legal { padding:10px 18px 70px; font-size:11px; color:#9a9384; }
+  footer.legal a { color:#9a9384; }
   #stage { position:relative; padding:8px 0 60px; }
   #score { position:relative; }
   #overlay { position:absolute; inset:0; pointer-events:none; }
@@ -52,7 +93,12 @@
   <p id="tagline"></p>
 </header>
 
-<div class="controls">
+<div class="panel-toggle" id="panelToggle">
+  <span class="pt-label"><span class="pt-arrow">▾</span> <span id="lblPanel"></span></span>
+  <span class="pt-chip" id="panelChip"></span>
+</div>
+
+<div class="controls" id="controls">
   <div class="ctl"><label id="lblScore"></label><button type="button" class="filebtn" id="btnScore"></button><input type="file" id="fileScore" hidden /></div>
   <div class="ctl"><label id="lblCustom"></label><button type="button" class="filebtn" id="btnCustom"></button><input type="file" id="fileCustom" hidden /></div>
   <div class="ctl"><label id="lblRH"></label><select id="rhSel"></select></div>
@@ -66,8 +112,23 @@
   <div class="ctl"><label>&nbsp;</label><button id="resetSel"></button></div>
 </div>
 
+<div class="share-row">
+  <button id="btnShare">🔗 <span id="lblShare"></span></button>
+  <button id="btnQR">▦ <span id="lblQR"></span></button>
+  <a href="https://wdeu.github.io/benny-accordion/" id="bennyLink" style="font-size:12px;color:var(--accent);text-decoration:none;margin-left:auto;display:flex;align-items:center;gap:5px;">🪗 <span id="lblBenny"></span> →</a>
+</div>
+
+<div id="qrPop">
+  <div class="qr-card">
+    <div id="qrDiv" style="display:inline-block"></div>
+    <div id="qrUrl" style="font-size:12px;color:#6b6457;word-break:break-all;"></div>
+    <button id="qrClose">✕</button>
+  </div>
+</div>
+
 <div id="stage"><div id="score"></div><div id="overlay"></div></div>
 <div id="status"></div>
+<footer class="legal"><a href="impressum.html" id="lblImpressum"></a></footer>
 
 <script type="module">
 import { parseKeyboard }   from "./des.js";
@@ -78,6 +139,9 @@ import { loadKeyboards, rhEntries, lhEntries, getRH, getLH, fillSelect, detectKi
 /* ---------- i18n (DE / FR / EN) ---------- */
 const STR = {
   de: {
+    lbl_panel:"Einstellungen", panel_open:"ausblenden", panel_closed:n=>n?"Layout & Partitur ✓":"einblenden",
+    lbl_share:"Teilen", lbl_qr:"QR-Code", lbl_benny:"Zu Benny", lbl_impressum:"Impressum",
+    share_title:"Soufflet — D.E.S.-Tablatur fürs Diato",
     tagline: "MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Sprache", lbl_score:"Partitur (.mxl / .musicxml / .xml)", lbl_rh:"Rechte Hand (Layout)", lbl_lh:"Linke Hand / Bass (Layout)",
     lbl_custom:"Eigenes .keyboard laden", lbl_play:"Spielweise", lbl_sol:"SOL-Akkord", lbl_fa:"FA-Akkord", lbl_one:"nur eine Möglichkeit", lbl_zoom:"Zoom",
@@ -96,6 +160,9 @@ const STR = {
     st_render_err:m=>`Render-Fehler: ${m}`, st_transcribe_err:m=>`Transcribe-Fehler: ${m}`,
   },
   fr: {
+    lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
+    lbl_share:"Partager", lbl_qr:"Code QR", lbl_benny:"Vers Benny", lbl_impressum:"Mentions légales",
+    share_title:"Soufflet — tablature D.E.S. pour accordéon diatonique",
     tagline: "MusicXML / .mxl en entrée → tablature à boutons au-dessus des notes. Tout reste local dans le navigateur. Touche une variante pour la choisir. · Continuation libre de DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Langue", lbl_score:"Partition (.mxl / .musicxml / .xml)", lbl_rh:"Main droite (plan)", lbl_lh:"Main gauche / basses (plan)",
     lbl_custom:"Charger un .keyboard", lbl_play:"Jeu", lbl_sol:"Accord SOL", lbl_fa:"Accord FA", lbl_one:"une seule possibilité", lbl_zoom:"Zoom",
@@ -114,6 +181,9 @@ const STR = {
     st_render_err:m=>`Erreur de rendu : ${m}`, st_transcribe_err:m=>`Erreur de transcription : ${m}`,
   },
   en: {
+    lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
+    lbl_share:"Share", lbl_qr:"QR code", lbl_benny:"To Benny", lbl_impressum:"Legal notice",
+    share_title:"Soufflet — D.E.S. tablature for diatonic accordion",
     tagline: "MusicXML / .mxl in → button tablature above the notes. Everything stays local in the browser. Tap a variant to choose it. · Open continuation of DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Language", lbl_score:"Score (.mxl / .musicxml / .xml)", lbl_rh:"Right hand (layout)", lbl_lh:"Left hand / bass (layout)",
     lbl_custom:"Load a .keyboard", lbl_play:"Playing style", lbl_sol:"SOL chord", lbl_fa:"FA chord", lbl_one:"one option only", lbl_zoom:"Zoom",
@@ -132,6 +202,9 @@ const STR = {
     st_render_err:m=>`Render error: ${m}`, st_transcribe_err:m=>`Transcribe error: ${m}`,
   },
   it: {
+    lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
+    lbl_share:"Condividi", lbl_qr:"Codice QR", lbl_benny:"Vai a Benny", lbl_impressum:"Note legali",
+    share_title:"Soufflet — intavolatura D.E.S. per fisarmonica diatonica",
     tagline: "MusicXML / .mxl in entrata → intavolatura a bottoni sopra le note. Tutto resta locale nel browser. Tocca una variante per sceglierla. · Continuazione libera di DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Lingua", lbl_score:"Partitura (.mxl / .musicxml / .xml)", lbl_rh:"Mano destra (schema)", lbl_lh:"Mano sinistra / bassi (schema)",
     lbl_custom:"Carica un .keyboard", lbl_play:"Esecuzione", lbl_sol:"Accordo SOL", lbl_fa:"Accordo FA", lbl_one:"una sola possibilità", lbl_zoom:"Zoom",
@@ -171,6 +244,15 @@ function applyI18n() {
   $("resetSel").textContent = T.btn_reset;
   for (const id of ["btnScore","btnCustom"]) { const b = $(id); if (!b.classList.contains("has-file")) b.textContent = T.file_choose; }
   document.querySelectorAll(".flag").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+  $("lblPanel").textContent = T.lbl_panel;
+  $("lblShare").textContent = T.lbl_share; $("lblQR").textContent = T.lbl_qr;
+  $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
+  updatePanelChip();
+}
+
+function updatePanelChip() {
+  const collapsed = $("controls").classList.contains("collapsed");
+  $("panelChip").textContent = collapsed ? L().panel_closed(!!currentXml) : L().panel_open;
 }
 
 /* ---------- Persistenz (localStorage) ---------- */
@@ -238,10 +320,17 @@ const options = () => ({
     try {
       currentXml = saved.xml; ensureOsmd(); await osmd.load(currentXml);
       if (saved.scoreName) { const b = $("btnScore"); b.textContent = saved.scoreName; b.title = saved.scoreName; b.classList.add("has-file"); }
-      await renderAll();
+      await renderAll(); collapsePanel();
     } catch (e) { setStatus(L().st_score_err(e.message), true); }
   }
+  updatePanelChip();
 })();
+
+function collapsePanel() {
+  $("controls").classList.add("collapsed");
+  $("panelToggle").classList.add("collapsed");
+  updatePanelChip();
+}
 
 async function readScoreFile(file) {
   const buf = await file.arrayBuffer();
@@ -333,7 +422,7 @@ function wireFileButton(btnId, inputId, onPick) {
 }
 
 wireFileButton("btnScore", "fileScore", async (f) => {
-  try { setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); }
+  try { setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 });
 $("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
@@ -370,8 +459,33 @@ $("resetSel").addEventListener("click", () => {
   $("fileScore").value = ""; $("fileCustom").value = "";   // damit dieselbe Datei erneut wählbar bleibt
   overlay.innerHTML = "";
   if (osmd) { try { osmd.clear(); } catch { $("score").innerHTML = ""; } }
+  $("controls").classList.remove("collapsed"); $("panelToggle").classList.remove("collapsed"); updatePanelChip();
   setStatus(bundle ? L().st_loaded(bundle.index.length) : L().st_start);
 });
+
+/* ---------- Einstellungen einklappen ---------- */
+$("panelToggle").addEventListener("click", () => {
+  $("controls").classList.toggle("collapsed");
+  $("panelToggle").classList.toggle("collapsed", $("controls").classList.contains("collapsed"));
+  updatePanelChip();
+});
+
+/* ---------- Teilen ---------- */
+const SHARE_URL = "https://wdeu.github.io/soufflet/";
+$("btnShare").addEventListener("click", async () => {
+  const data = { title: L().share_title, url: SHARE_URL };
+  if (navigator.share) { try { await navigator.share(data); } catch {} }
+  else { try { await navigator.clipboard.writeText(SHARE_URL); setStatus(SHARE_URL + " — kopiert"); } catch { openQR(); } }
+});
+function openQR() {
+  const div = $("qrDiv"); div.innerHTML = "";
+  new QRCode(div, { text: SHARE_URL, width: 200, height: 200, colorDark: "#1c1a17", colorLight: "#ffffff" });
+  $("qrUrl").textContent = SHARE_URL;
+  $("qrPop").classList.add("open");
+}
+$("btnQR").addEventListener("click", openQR);
+$("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
+$("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });
 
 let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(renderAll, 150); });
 </script>

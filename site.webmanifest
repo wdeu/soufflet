@@ -1,0 +1,15 @@
+{
+  "name": "Soufflet — D.E.S.-Tablatur fürs Diato",
+  "short_name": "Soufflet",
+  "description": "MusicXML zu Knopf-Tablatur fürs diatonische Akkordeon, lokal im Browser.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#1c1a17",
+  "icons": [
+    { "src": "icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

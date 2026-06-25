@@ -158,6 +158,7 @@ const STR = {
     st_layout_err:m=>`Layout-Datei fehlerhaft: ${m}`,
     st_bundle_err:m=>`keyboards.json nicht erreichbar (${m}) — Fallback-Layouts aktiv. Tipp: über einen Webserver öffnen.`,
     st_render_err:m=>`Render-Fehler: ${m}`, st_transcribe_err:m=>`Transcribe-Fehler: ${m}`,
+    st_nochord:p=>`keine Akkordsymbole erkannt (${p}% der Noten ohne Akkord) – Balgrichtung folgt nur der Spielweise-Einstellung`,
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -179,6 +180,7 @@ const STR = {
     st_layout_err:m=>`Fichier de plan invalide : ${m}`,
     st_bundle_err:m=>`keyboards.json inaccessible (${m}) — plans de secours actifs. Astuce : ouvrir via un serveur web.`,
     st_render_err:m=>`Erreur de rendu : ${m}`, st_transcribe_err:m=>`Erreur de transcription : ${m}`,
+    st_nochord:p=>`aucun symbole d\u2019accord d\u00e9tect\u00e9 (${p}\u00a0% des notes sans accord) \u2013 le sens du soufflet suit uniquement le r\u00e9glage de jeu`,
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -200,6 +202,7 @@ const STR = {
     st_layout_err:m=>`Invalid layout file: ${m}`,
     st_bundle_err:m=>`keyboards.json unreachable (${m}) — fallback layouts active. Tip: open via a web server.`,
     st_render_err:m=>`Render error: ${m}`, st_transcribe_err:m=>`Transcribe error: ${m}`,
+    st_nochord:p=>`no chord symbols detected (${p}% of notes without a chord) \u2013 bellows direction follows only the playing-style setting`,
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -221,6 +224,7 @@ const STR = {
     st_layout_err:m=>`File di schema non valido: ${m}`,
     st_bundle_err:m=>`keyboards.json non raggiungibile (${m}) — schemi di riserva attivi. Suggerimento: aprire tramite un server web.`,
     st_render_err:m=>`Errore di rendering: ${m}`, st_transcribe_err:m=>`Errore di trascrizione: ${m}`,
+    st_nochord:p=>`nessun simbolo di accordo rilevato (${p}% delle note senza accordo) \u2013 il senso del mantice segue solo l\u2019impostazione di esecuzione`,
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -403,7 +407,9 @@ function placeOverlay() {
     applySelection(div, i);
   }
   const warn = rhKb.warnings?.length ? `<span class="warn">${L().st_warn(rhKb.warnings.length)}</span>` : "";
-  setStatus(L().st_notes(n, rhKb.description, lhKb.description) + warn);
+  const noChordRatio = n ? tab.slice(0, n).filter(e => !e.chord).length / n : 0;
+  const chordHint = noChordRatio > 0.7 ? ` · <span class="warn">${L().st_nochord(Math.round(noChordRatio*100))}</span>` : "";
+  setStatus(L().st_notes(n, rhKb.description, lhKb.description) + warn + chordHint);
 }
 
 function applySelection(div, i) {

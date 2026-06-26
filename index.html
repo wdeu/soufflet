@@ -68,6 +68,13 @@
   #qrPop button { margin-top:8px; font:inherit; padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
   footer.legal { padding:10px 18px 70px; font-size:11px; color:#9a9384; }
   footer.legal a { color:#9a9384; }
+
+  @media print {
+    header, .panel-toggle, .controls, .share-row, #qrPop, footer.legal { display:none !important; }
+    #status { position:static; border-top:none; padding:6px 0 0; }
+    #stage { padding:0; }
+    body { background:#fff; }
+  }
   #stage { position:relative; padding:8px 0 60px; }
   #score { position:relative; }
   #overlay { position:absolute; inset:0; pointer-events:none; }
@@ -115,6 +122,7 @@
 <div class="share-row">
   <button id="btnShare">🔗 <span id="lblShare"></span></button>
   <button id="btnQR">▦ <span id="lblQR"></span></button>
+  <button id="btnPrint">🖨 <span id="lblPrint"></span></button>
   <a href="https://wdeu.github.io/benny-accordion/" id="bennyLink" style="font-size:12px;color:var(--accent);text-decoration:none;margin-left:auto;display:flex;align-items:center;gap:5px;">🪗 <span id="lblBenny"></span> →</a>
 </div>
 
@@ -159,6 +167,7 @@ const STR = {
     st_bundle_err:m=>`keyboards.json nicht erreichbar (${m}) — Fallback-Layouts aktiv. Tipp: über einen Webserver öffnen.`,
     st_render_err:m=>`Render-Fehler: ${m}`, st_transcribe_err:m=>`Transcribe-Fehler: ${m}`,
     st_nochord:p=>`keine Akkordsymbole erkannt (${p}% der Noten ohne Akkord) – Balgrichtung folgt nur der Spielweise-Einstellung`,
+    lbl_print:"Drucken",
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -181,6 +190,7 @@ const STR = {
     st_bundle_err:m=>`keyboards.json inaccessible (${m}) — plans de secours actifs. Astuce : ouvrir via un serveur web.`,
     st_render_err:m=>`Erreur de rendu : ${m}`, st_transcribe_err:m=>`Erreur de transcription : ${m}`,
     st_nochord:p=>`aucun symbole d\u2019accord d\u00e9tect\u00e9 (${p}\u00a0% des notes sans accord) \u2013 le sens du soufflet suit uniquement le r\u00e9glage de jeu`,
+    lbl_print:"Imprimer",
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -203,6 +213,7 @@ const STR = {
     st_bundle_err:m=>`keyboards.json unreachable (${m}) — fallback layouts active. Tip: open via a web server.`,
     st_render_err:m=>`Render error: ${m}`, st_transcribe_err:m=>`Transcribe error: ${m}`,
     st_nochord:p=>`no chord symbols detected (${p}% of notes without a chord) \u2013 bellows direction follows only the playing-style setting`,
+    lbl_print:"Print",
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -225,6 +236,7 @@ const STR = {
     st_bundle_err:m=>`keyboards.json non raggiungibile (${m}) — schemi di riserva attivi. Suggerimento: aprire tramite un server web.`,
     st_render_err:m=>`Errore di rendering: ${m}`, st_transcribe_err:m=>`Errore di trascrizione: ${m}`,
     st_nochord:p=>`nessun simbolo di accordo rilevato (${p}% delle note senza accordo) \u2013 il senso del mantice segue solo l\u2019impostazione di esecuzione`,
+    lbl_print:"Stampa",
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -249,7 +261,7 @@ function applyI18n() {
   for (const id of ["btnScore","btnCustom"]) { const b = $(id); if (!b.classList.contains("has-file")) b.textContent = T.file_choose; }
   document.querySelectorAll(".flag").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
   $("lblPanel").textContent = T.lbl_panel;
-  $("lblShare").textContent = T.lbl_share; $("lblQR").textContent = T.lbl_qr;
+  $("lblShare").textContent = T.lbl_share; $("lblQR").textContent = T.lbl_qr; $("lblPrint").textContent = T.lbl_print;
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
   updatePanelChip();
 }
@@ -491,6 +503,7 @@ function openQR() {
   $("qrPop").classList.add("open");
 }
 $("btnQR").addEventListener("click", openQR);
+$("btnPrint").addEventListener("click", () => window.print());
 $("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
 $("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });
 

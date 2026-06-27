@@ -78,6 +78,39 @@ function harmonyToSymbol(h) {
   return step + (alter > 0 ? "#".repeat(alter) : alter < 0 ? "b".repeat(-alter) : "");
 }
 
+// ---------- 2b. Variante D: Akkordwurzel aus Bass-Mehrklängen ---------------
+// NUR wenn das ganze Stück KEIN <harmony>-Symbol enthält (z.B. reine Klavier-
+// Arrangements). Liefert pro Takt höchstens EINEN Grundton: den tiefsten Ton
+// der ersten echten Mehrklang-Gruppe (>=2 gestapelte Noten via <chord>) im
+// Bass-System dieses Takts. Keine Heuristik aus der Melodie (Variante B) —
+// nur Fakten, die im Notentext bereits stehen.
+const STEP_SEMITONE = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+const pitchOffset = (step, alter) => (STEP_SEMITONE[step] ?? 0) + alter;
+function deriveBassChordsByMeasure(part, melodyStaff) {
+  const map = new Map();
+  let mIndex = 0;
+  for (const measure of kids(part, "measure")) {
+    mIndex++;
+    let stack = [];
+    let found = null;
+    for (const el of kids(measure, "note")) {
+      const staff = txt(kid(el, "staff"));
+      if (melodyStaff && staff === String(melodyStaff)) continue;   // das ist die Melodiestimme, nicht der Bass
+      const pitch = kid(el, "pitch");
+      if (!pitch) { stack = []; continue; }                         // Pause/unpitched beendet die Gruppe
+      const inChord = !!kid(el, "chord");
+      if (!inChord) stack = [];                                     // neue Gruppe beginnt
+      stack.push({ step: txt(kid(pitch, "step")), alter: Number(txt(kid(pitch, "alter")) || 0), octave: Number(txt(kid(pitch, "octave"))) });
+      if (stack.length >= 2 && !found) {
+        const lowest = stack.reduce((a, b) => a.octave * 12 + pitchOffset(a.step, a.alter) <= b.octave * 12 + pitchOffset(b.step, b.alter) ? a : b);
+        found = lowest.step + (lowest.alter > 0 ? "#".repeat(lowest.alter) : lowest.alter < 0 ? "b".repeat(-lowest.alter) : "");
+      }
+    }
+    if (found) map.set(mIndex, found);
+  }
+  return map;
+}
+
 // ---------- 3. Melodie-mit-Akkorden-Strom -----------------------------------
 // options: { partId, voice, staff, includeRests }
 export function melodyWithChords(xmlString, options = {}) {
@@ -95,19 +128,33 @@ export function melodyWithChords(xmlString, options = {}) {
   const part = options.partId ? parts.find(p => p.attrs.id === options.partId) : parts[0];
   if (!part) throw new Error(`Part "${options.partId}" nicht gefunden.`);
 
+  // Sicherheits-Filter: bei mehrstimmigen Stücken (Klavier: 2 Notensysteme im
+  // selben <part>) automatisch auf System 1 (Melodie) beschränken — sonst
+  // landen Bass-Noten im selben Strom wie die Melodie und verschieben den
+  // Index gegenüber der Bildschirm-Position (nur System 1 wird positioniert).
+  const allStaves = new Set();
+  for (const measure of kids(part, "measure"))
+    for (const el of kids(measure, "note")) { const s = txt(kid(el, "staff")); if (s) allStaves.add(s); }
+  const effectiveStaff = options.staff ?? (allStaves.size > 1 ? "1" : undefined);
+
+  const hasAnyHarmony = !!findFirst(part, "harmony");
+  const bassChordByMeasure = (!hasAnyHarmony && allStaves.size > 1) ? deriveBassChordsByMeasure(part, effectiveStaff) : null;
+  const chordSource = hasAnyHarmony ? "harmony" : (bassChordByMeasure?.size ? "bass" : "none");
+
   const events = [];
   let currentChord = null;
   let chordJustChanged = false;   // true für das eine Event, bei dem OSMD den Akkordsymbol-Text zeichnet
   let mIndex = 0;
   for (const measure of kids(part, "measure")) {
     mIndex++;
+    if (bassChordByMeasure) currentChord = bassChordByMeasure.get(mIndex) ?? null;   // kein chordJustChanged: kein sichtbares Symbol zum Umgehen
     for (const el of measure.children) {
       if (el.tag === "harmony") { currentChord = harmonyToSymbol(el); chordJustChanged = true; continue; }
       if (el.tag !== "note") continue;
       const voice = txt(kid(el, "voice"));
       const staff = txt(kid(el, "staff"));
       if (options.voice && voice && voice !== String(options.voice)) continue;
-      if (options.staff && staff && staff !== String(options.staff)) continue;
+      if (effectiveStaff && staff && staff !== String(effectiveStaff)) continue;
       const isRest = !!kid(el, "rest");
       const inChord = !!kid(el, "chord");          // mit Vornote gestapelt (Mehrklang)
       if (isRest) { if (options.includeRests) events.push({ measure: mIndex, rest: true, chord: currentChord, chordChange: chordJustChanged }); chordJustChanged = false; continue; }
@@ -128,19 +175,19 @@ export function melodyWithChords(xmlString, options = {}) {
   }
   return { title: txt(findFirst(score, "movement-title")) || txt(findFirst(score, "credit-words")),
            parts: parts.map(p => ({ id: p.attrs.id, name: partNames[p.attrs.id] || "" })),
-           events };
+           events, chordSource };
 }
 
 // ---------- 4. Komplett-Durchlauf: MusicXML -> D.E.S. -----------------------
 // rh: parseKeyboard(); lh: parseLHKeyboard()|null; opts -> melodyWithChords + resolve.
 export function transcribe(rh, lh, xmlString, opts = {}) {
-  const { title, parts, events } = melodyWithChords(xmlString, opts);
+  const { title, parts, events, chordSource } = melodyWithChords(xmlString, opts);
   const tab = events.map(ev => {
     if (ev.rest) return { ...ev, des: [] };
     const r = resolve(rh, lh, { step: ev.step, alter: ev.alter, octave: ev.octave }, ev.chord, opts);
     return { ...ev, key: r.key, direction: r.direction, des: r.des };
   });
-  return { title, parts, tab };
+  return { title, parts, tab, chordSource };
 }
 
 // ---------- .mxl-Hinweis (Browser-Glue, kein Node-Test) ---------------------

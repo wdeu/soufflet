@@ -86,6 +86,7 @@
   .des .cand:hover { background:#efe9dc; }
   #status { padding:6px 18px; font-size:12px; color:#6b6457; border-top:1px solid var(--line); position:fixed; bottom:0; left:0; right:0; background:var(--paper); }
   .warn { color:#9a3b1b; }
+  .hint { color:var(--accent); }
 </style>
 </head>
 <body>
@@ -168,6 +169,7 @@ const STR = {
     st_render_err:m=>`Render-Fehler: ${m}`, st_transcribe_err:m=>`Transcribe-Fehler: ${m}`,
     st_nochord:p=>`keine Akkordsymbole erkannt (${p}% der Noten ohne Akkord) – Balgrichtung folgt nur der Spielweise-Einstellung`,
     lbl_print:"Drucken",
+    st_bassderived:()=>"Akkordwurzeln aus Bass-Mehrkl\u00e4ngen abgeleitet (kein <harmony>-Symbol im St\u00fcck \u2013 Variante D, 1 Akkord/Takt)",
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -191,6 +193,7 @@ const STR = {
     st_render_err:m=>`Erreur de rendu : ${m}`, st_transcribe_err:m=>`Erreur de transcription : ${m}`,
     st_nochord:p=>`aucun symbole d\u2019accord d\u00e9tect\u00e9 (${p}\u00a0% des notes sans accord) \u2013 le sens du soufflet suit uniquement le r\u00e9glage de jeu`,
     lbl_print:"Imprimer",
+    st_bassderived:()=>"Fondamentales d\u00e9duites des accords de la basse (aucun symbole d\u2019accord dans la partition \u2013 m\u00e9thode D, 1 accord/mesure)",
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -214,6 +217,7 @@ const STR = {
     st_render_err:m=>`Render error: ${m}`, st_transcribe_err:m=>`Transcribe error: ${m}`,
     st_nochord:p=>`no chord symbols detected (${p}% of notes without a chord) \u2013 bellows direction follows only the playing-style setting`,
     lbl_print:"Print",
+    st_bassderived:()=>"Chord roots derived from bass-staff chords (no chord symbols in this score \u2013 method D, 1 chord/measure)",
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -237,6 +241,7 @@ const STR = {
     st_render_err:m=>`Errore di rendering: ${m}`, st_transcribe_err:m=>`Errore di trascrizione: ${m}`,
     st_nochord:p=>`nessun simbolo di accordo rilevato (${p}% delle note senza accordo) \u2013 il senso del mantice segue solo l\u2019impostazione di esecuzione`,
     lbl_print:"Stampa",
+    st_bassderived:()=>"Fondamentali ricavate dagli accordi del basso (nessun simbolo di accordo nella partitura \u2013 metodo D, 1 accordo/battuta)",
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -390,7 +395,8 @@ function placeOverlay() {
   if (!osmd || !currentXml) return;
   const U = 10 * osmd.zoom;
   let tab;
-  try { tab = transcribe(rhKb, lhKb, currentXml, options()).tab.filter(e => !e.rest); }
+  let chordSource;
+  try { const res = transcribe(rhKb, lhKb, currentXml, options()); chordSource = res.chordSource; tab = res.tab.filter(e => !e.rest); }
   catch (e) { setStatus(L().st_transcribe_err(e.message), true); return; }
   const gnotes = collectGraphicalNotes(0);
   const n = Math.min(gnotes.length, tab.length);
@@ -420,7 +426,9 @@ function placeOverlay() {
   }
   const warn = rhKb.warnings?.length ? `<span class="warn">${L().st_warn(rhKb.warnings.length)}</span>` : "";
   const noChordRatio = n ? tab.slice(0, n).filter(e => !e.chord).length / n : 0;
-  const chordHint = noChordRatio > 0.7 ? ` · <span class="warn">${L().st_nochord(Math.round(noChordRatio*100))}</span>` : "";
+  let chordHint = "";
+  if (chordSource === "bass") chordHint = ` · <span class="hint">${L().st_bassderived()}</span>`;
+  else if (noChordRatio > 0.7) chordHint = ` · <span class="warn">${L().st_nochord(Math.round(noChordRatio*100))}</span>`;
   setStatus(L().st_notes(n, rhKb.description, lhKb.description) + warn + chordHint);
 }
 

@@ -87,6 +87,7 @@
   #status { padding:6px 18px; font-size:12px; color:#6b6457; border-top:1px solid var(--line); position:fixed; bottom:0; left:0; right:0; background:var(--paper); }
   .warn { color:#9a3b1b; }
   .hint { color:var(--accent); }
+  .chord-d { position:absolute; transform:translate(-0.5ch,-100%); font:italic 11px/1 -apple-system,sans-serif; color:var(--accent); opacity:.75; pointer-events:none; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -170,6 +171,7 @@ const STR = {
     st_nochord:p=>`keine Akkordsymbole erkannt (${p}% der Noten ohne Akkord) – Balgrichtung folgt nur der Spielweise-Einstellung`,
     lbl_print:"Drucken",
     st_bassderived:()=>"Akkordwurzeln aus Bass-Mehrkl\u00e4ngen abgeleitet (kein <harmony>-Symbol im St\u00fcck \u2013 Variante D, 1 Akkord/Takt)",
+    chordd_tip:()=>"abgeleitete Akkordwurzel (Variante D) \u2013 kein Symbol aus der Partitur",
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -194,6 +196,7 @@ const STR = {
     st_nochord:p=>`aucun symbole d\u2019accord d\u00e9tect\u00e9 (${p}\u00a0% des notes sans accord) \u2013 le sens du soufflet suit uniquement le r\u00e9glage de jeu`,
     lbl_print:"Imprimer",
     st_bassderived:()=>"Fondamentales d\u00e9duites des accords de la basse (aucun symbole d\u2019accord dans la partition \u2013 m\u00e9thode D, 1 accord/mesure)",
+    chordd_tip:()=>"fondamentale d\u00e9duite (m\u00e9thode D) \u2013 pas un symbole de la partition",
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -218,6 +221,7 @@ const STR = {
     st_nochord:p=>`no chord symbols detected (${p}% of notes without a chord) \u2013 bellows direction follows only the playing-style setting`,
     lbl_print:"Print",
     st_bassderived:()=>"Chord roots derived from bass-staff chords (no chord symbols in this score \u2013 method D, 1 chord/measure)",
+    chordd_tip:()=>"derived chord root (method D) \u2013 not a symbol from the score",
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -242,6 +246,7 @@ const STR = {
     st_nochord:p=>`nessun simbolo di accordo rilevato (${p}% delle note senza accordo) \u2013 il senso del mantice segue solo l\u2019impostazione di esecuzione`,
     lbl_print:"Stampa",
     st_bassderived:()=>"Fondamentali ricavate dagli accordi del basso (nessun simbolo di accordo nella partitura \u2013 metodo D, 1 accordo/battuta)",
+    chordd_tip:()=>"fondamentale dedotta (metodo D) \u2013 non un simbolo della partitura",
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -400,6 +405,7 @@ function placeOverlay() {
   catch (e) { setStatus(L().st_transcribe_err(e.message), true); return; }
   const gnotes = collectGraphicalNotes(0);
   const n = Math.min(gnotes.length, tab.length);
+  let lastChordMeasureShown = null;   // Variante D: Hinweistext einmal pro Takt, nicht pro Note
   for (let i = 0; i < n; i++) {
     const ev = tab[i];
     if (!ev.des || ev.des.length === 0) continue;
@@ -423,6 +429,18 @@ function placeOverlay() {
     });
     overlay.appendChild(div);
     applySelection(div, i);
+
+    // Variante D: abgeleitete Akkordwurzel sichtbar machen — bewusst klein, kursiv,
+    // in Klammern, gedämpfte Farbe: deutlich von echten <harmony>-Symbolen unterscheidbar.
+    if (chordSource === "bass" && ev.chord && ev.measure !== lastChordMeasureShown) {
+      lastChordMeasureShown = ev.measure;
+      const cd = document.createElement("div");
+      cd.className = "chord-d";
+      cd.style.left = x + "px"; cd.style.top = (yTop - 4 - chordHeadroom - 3.0 * U) + "px";
+      cd.textContent = "(" + ev.chord + ")";
+      cd.title = L().chordd_tip();
+      overlay.appendChild(cd);
+    }
   }
   const warn = rhKb.warnings?.length ? `<span class="warn">${L().st_warn(rhKb.warnings.length)}</span>` : "";
   const noChordRatio = n ? tab.slice(0, n).filter(e => !e.chord).length / n : 0;

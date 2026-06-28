@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hilfe — Soufflet</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<style>
+  :root { --ink:#1c1a17; --paper:#fbfaf7; --line:#d8d2c6; --accent:#7a5c2e; }
+  body { margin:0; font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--paper); }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:17px; font-weight:600; }
+  main { max-width:640px; margin:0 auto; padding:24px 18px 60px; }
+  h2 { font-size:16px; margin:30px 0 8px; color:var(--ink); }
+  h2 .num { color:var(--accent); margin-right:6px; }
+  p { margin:4px 0 10px; }
+  ul { margin:4px 0 10px; padding-left:20px; }
+  li { margin:3px 0; }
+  code { background:#f0ebe0; border-radius:4px; padding:1px 5px; font-size:13px; }
+  .chip { display:inline-block; font-style:italic; color:var(--accent); opacity:.85; }
+  .pull { text-decoration:underline; }
+  .note { background:#f4f1ea; border-left:3px solid var(--accent); padding:8px 12px; margin:10px 0; font-size:14px; }
+  a { color:var(--accent); }
+  .back { display:inline-block; margin-top:36px; font-size:13px; }
+  .intro { font-size:14px; color:#6b6457; margin-bottom:24px; }
+</style>
+</head>
+<body>
+<header><h1>Soufflet 🪗 — Hilfe</h1></header>
+<main>
+  <p class="intro">Kurzanleitung für den Einstieg. Alles läuft lokal im Browser — nichts wird hochgeladen.</p>
+
+  <h2><span class="num">1</span>Partitur laden</h2>
+  <p>Oben unter „Partitur" eine Datei wählen — <code>.mxl</code>, <code>.musicxml</code> oder <code>.xml</code>. Beim ersten Laden klappt das Einstellungs-Panel automatisch zu, damit mehr Platz für die Noten bleibt. Über „▸ Einstellungen" lässt es sich jederzeit wieder öffnen.</p>
+
+  <h2><span class="num">2</span>Knopflayout wählen</h2>
+  <p>„Rechte Hand" und „Linke Hand / Bass" bestimmen, welche der 26 mitgelieferten Knopfbelegungen genutzt wird. Passt keine davon, lässt sich über „Eigenes .keyboard laden" eine eigene Datei einbinden.</p>
+  <p>„Stimme (Diskant)" erscheint <strong>nur</strong>, wenn ein Stück mehrere Melodiestimmen im selben System enthält (z. B. eine gehaltene Begleitstimme neben der eigentlichen Melodie). Bei den meisten Stücken bleibt dieses Feld unsichtbar.</p>
+
+  <h2><span class="num">3</span>Die Tablatur lesen</h2>
+  <p>Über jeder Note erscheinen ein oder mehrere spielbare Knöpfe (D.E.S.-Notation). Eine <span class="pull">unterstrichene</span> Zahl bedeutet Zug, eine nicht unterstrichene Zahl bedeutet Druck. Antippen wählt eine Variante aus — die hervorgehobene Zahl ist die getroffene Wahl, sie wird gespeichert und bleibt beim nächsten Besuch erhalten.</p>
+
+  <h2><span class="num">4</span>Akkordhinweise verstehen</h2>
+  <p>Soufflet zeigt drei unterschiedliche Sicherheitsstufen:</p>
+  <ul>
+    <li><strong>Echtes Akkordsymbol</strong> (z. B. „Am" über den Noten) — aus der Partitur selbst, bestimmt die Balgrichtung direkt.</li>
+    <li><strong class="chip">(C)</strong> — eine kleine, kursive Anmerkung in Klammern: Soufflet hat die Akkordwurzel selbst aus gestapelten Bassnoten abgeleitet, weil die Partitur kein eigenes Symbol enthält. Deutlich von echten Symbolen unterschieden, damit nichts verwechselt wird.</li>
+    <li><strong>Hinweis in der Statuszeile</strong> („keine Akkordsymbole erkannt …") — wenn gar keine Akkordinformation auffindbar ist. Die Balgrichtung folgt dann nur der „Spielweise"-Einstellung.</li>
+  </ul>
+  <div class="note">Diese Stufen sind bewusst getrennt: Soufflet rät nie heimlich — was nicht sicher ist, wird auch so benannt.</div>
+
+  <h2><span class="num">5</span>Spielweise & Balgrichtung</h2>
+  <p>„Spielweise" legt fest, ob ein Akkord die Richtung bestimmt (kreuzweise) oder ob einreihig auf der G- bzw. C-Reihe gespielt wird. „SOL-Akkord" und „FA-Akkord" stellen für diese beiden Akkorde gesondert ein, ob beide Richtungen, nur Zug oder nur Druck erlaubt sind.</p>
+
+  <h2><span class="num">6</span>Abspielen</h2>
+  <p>„▶ Abspielen" startet die Wiedergabe mit einem eigenen Akkordeon-Klang. Ein grüner Balken läuft über die aktuell klingende Note, die Seite folgt automatisch (Auto-Scroll). „⏸ Pause" hält genau an der aktuellen Stelle, ein erneuter Klick setzt dort fort. „■ Stopp" setzt auf den Anfang zurück.</p>
+  <p>Läuft die Wiedergabe weiter unten auf der Seite, erscheint unten rechts eine kleine, fest sichtbare Mini-Leiste mit Play/Pause und Stopp — so bleiben die Bedienelemente immer erreichbar, auch wenn die oberen Buttons durch das Auto-Scroll außer Sicht geraten sind.</p>
+
+  <h2><span class="num">7</span>Teilen, QR-Code, Drucken</h2>
+  <p>„Teilen" öffnet das native Teilen-Menü des Geräts (oder kopiert den Link, falls nicht verfügbar). „QR-Code" zeigt einen scanbaren Code zur Live-Adresse — praktisch, um die App in einer Session schnell weiterzugeben. „Drucken" öffnet den Druckdialog mit einer aufgeräumten Ansicht (nur Noten + Tablatur, keine Bedienelemente).</p>
+
+  <h2><span class="num">8</span>Sprache wechseln</h2>
+  <p>Die vier Flaggen oben rechts (🇩🇪 🇫🇷 🇮🇹 🇬🇧) schalten die Oberfläche um. Die Wahl wird gespeichert.</p>
+
+  <h2><span class="num">9</span>Alles zurücksetzen</h2>
+  <p>Setzt Layout, Optionen, Partitur und alle getroffenen Auswahlen auf den Ausgangszustand zurück — für einen sauberen Neustart.</p>
+
+  <a class="back" href="index.html">← Zurück zu Soufflet</a>
+</main>
+</body>
+</html>

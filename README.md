@@ -1,110 +1,129 @@
 # Soufflet 🪗
 
-**DE** · Tablatur für diatonisches Akkordeon, direkt aus MusicXML — komplett lokal im Browser.
-**FR** · Tablature pour accordéon diatonique, directement depuis MusicXML — entièrement local, dans le navigateur.
+**MusicXML / .mxl → Knopf-Tablatur (D.E.S.) fürs diatonische Akkordeon — direkt über den Noten, im Browser, komplett lokal.**
 
-Eine offene Fortschreibung der MuseScore-3-Plugins **DiatonicTab** von Jean-Michel Bencetti, die unter MuseScore 4 nicht mehr laufen. Soufflet rendert die Partitur mit OpenSheetMusicDisplay und legt die Knopf-Tablatur (D.E.S.) als Overlay über die Noten. Keine Installation, kein Server, keine Cloud — die Partitur verlässt das Gerät nie.
+🔗 **Live: [wdeu.github.io/soufflet](https://wdeu.github.io/soufflet/)**
 
-*Une continuation libre des plugins MuseScore 3 **DiatonicTab** de Jean-Michel Bencetti, qui ne fonctionnent plus sous MuseScore 4. Soufflet affiche la partition avec OpenSheetMusicDisplay et superpose la tablature à boutons (D.E.S.) au-dessus des notes. Aucune installation, aucun serveur, aucun cloud — la partition ne quitte jamais l'appareil.*
+Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://jmi.ovh/DiatonicTab) DiatonicTab-Plugins für MuseScore — als eigenständige Web-App, ohne Installation, ohne MuseScore, auf jedem Gerät mit Browser.
 
----
+-----
 
-## 🇩🇪 Deutsch
+## 🇩🇪 Was Soufflet macht
 
-**Was es macht.** MusicXML-Datei (`.mxl`, `.musicxml`, `.xml`) wählen → die Melodie wird mit den Akkordsymbolen analysiert, je Note werden die passenden Knöpfe bestimmt, und über jeder Note erscheint die D.E.S.-Tablatur. Knöpfe in **Zug** sind unterstrichen, in **Druck** normal. Wo mehrere Knöpfe möglich sind, **tippst du die passende Variante an** statt sie wie im Plugin zu löschen.
+1. Partitur laden (`.mxl`, `.musicxml`, `.xml`) — bleibt komplett im Browser, nichts wird hochgeladen.
+1. Knopflayout wählen (26 mitgelieferte Belegungen, oder eigenes `.keyboard` hochladen).
+1. Über jeder Note erscheinen die spielbaren Knopf-Kandidaten (D.E.S.-Notation) — Zug ist unterstrichen, Druck nicht.
+1. Eine Variante antippen, um sie auszuwählen — die Wahl wird lokal gespeichert.
+1. Optional: abspielen lassen (Akkordeon-Klang, grüner Laufbalken, Auto-Scroll) statt nur zu lesen.
 
-**Funktionen.**
-- 26 Tastatur-Layouts eingebaut (G/C, B/C, C#/D, G/C/F; 2-, 3- und Mehrreiher), eigene `.keyboard` ladbar.
-- Akkord bestimmt die Balgrichtung — datengetrieben aus der Bass-Datei (`Tire`/`Pousse`/`2sens`).
-- Optionen: kreuzweise vs. einreihig (G- oder C-Reihe), SOL/FA-Richtung erzwingen, nur eine Möglichkeit zeigen.
-- Toleranter Parser: Tippfehler in Community-Layouts werden übersprungen und gemeldet, nicht verschluckt.
+### Funktionsumfang (Stand dieser Version)
 
-**Schnellstart.** ES-Module brauchen einen Webserver (kein `file://`):
-```
-python3 -m http.server 8000     # dann http://localhost:8000/ öffnen
-```
-Oder das Raycast-Skript **Soufflet · Serve** benutzen.
+**Tablatur & Layouts**
 
----
+- 26 Knopfbelegungen (G/C, Sol/Do u.a.), gruppiert nach Tonart, plus eigenes `.keyboard`-Upload.
+- Spielweise wählbar: kreuzweise (Akkord bestimmt Balgrichtung), einreihig G, einreihig C.
+- Akkordrichtung für SOL/FA-Akkorde einzeln einstellbar (beide / nur Zug / nur Druck).
+- **Akkorderkennung in drei Stufen**, transparent gekennzeichnet:
+  - Echtes `<harmony>`-Symbol aus der Partitur (z. B. „Am”) → bestimmt die Balgrichtung direkt.
+  - **Variante D** — keine Akkordsymbole im Stück, aber gestapelte Bassnoten vorhanden: Akkordwurzel wird aus dem tiefsten Ton der Bass-Mehrklänge pro Takt abgeleitet und als kleine, kursive „(C)”-Anmerkung sichtbar gemacht — deutlich von echten Symbolen unterschieden.
+  - **Variante A** — gar keine Akkordinformation auffindbar: ehrlicher Hinweis in der Statuszeile statt stillem Raten.
+- **Stimmen-Auswahl**: Erscheint automatisch, wenn ein System mehrere `<voice>`-Stränge enthält (z. B. Melodie + gehaltene Begleitstimme im selben System) — sonst unsichtbar.
+- Mehrsystem-Sicherung: bei Klavier-Layouts (2 Systeme im selben Part) wird automatisch nur das Melodiesystem ausgewertet, der Bass fließt nicht versehentlich in die Tablatur ein.
 
-## 🇫🇷 Français
+**Akustische Wiedergabe**
 
-**Ce que ça fait.** Choisis un fichier MusicXML (`.mxl`, `.musicxml`, `.xml`) → la mélodie est analysée avec les symboles d'accords, les boutons adéquats sont déterminés pour chaque note, et la tablature D.E.S. s'affiche au-dessus. Les boutons **tirés** sont soulignés, **poussés** non. Quand plusieurs boutons sont possibles, **tu touches la bonne variante** au lieu de l'effacer comme dans le plugin.
+- Eigener Synthesizer, 1:1 aus [Benny Accordion](https://wdeu.github.io/benny-accordion/) portiert (spektral vermessener Akkordeon-Klang, keine generische Synthese).
+- Bass-Begleitung mit eigener, großzügigerer Erkennung als die Tablatur (auch einzelne, nicht gestapelte Basstöne werden als Begleitwurzel genutzt — fürs Hören unkritischer als für die Tablatur-Anzeige).
+- Grüner Laufbalken über der aktuell klingenden Note, mit Auto-Scroll.
+- Echtes Play/Pause/Stop — Fortsetzen läuft exakt an der Pausenstelle weiter.
+- Zeitanzeige (verstrichen / gesamt).
+- Fest im Bild verankerte Mini-Transportleiste, erreichbar auch wenn die Hauptbuttons durch Auto-Scroll außer Sicht sind.
+- Tempo ausschließlich aus dem maschinenlesbaren `<sound tempo>`-Wert (nie aus der optischen Metronomangabe — bei punktierten Vierteln in 6/8 wäre das sonst falsch).
 
-**Fonctions.**
-- 26 plans de clavier inclus (G/C, B/C, Do#/Ré, G/C/F ; 2, 3 rangs et plus), import de tes propres `.keyboard`.
-- L'accord détermine le sens du soufflet — piloté par le fichier de basses (`Tire`/`Pousse`/`2sens`).
-- Options : jeu croisé ou en ligne (rang de G ou de C), forcer le sens de SOL/FA, n'afficher qu'une possibilité.
-- Analyseur tolérant : les fautes de frappe des plans communautaires sont ignorées et signalées, pas avalées.
+**Bedienung & Teilen**
 
-**Démarrage rapide.** Les modules ES nécessitent un serveur web (pas `file://`) :
-```
-python3 -m http.server 8000     # puis ouvrir http://localhost:8000/
-```
-Ou utiliser le script Raycast **Soufflet · Serve**.
+- Einklappbares Einstellungs-Panel (mehr Platz für die Noten auf dem iPhone).
+- Vollständige Persistenz: Layout, Optionen, Zoom, geladene Partitur und getroffene Auswahl überleben einen Browser-Neustart.
+- „Alles zurücksetzen” für einen kompletten, sauberen Neustart.
+- Teilen-Button (natives iOS-Teilen-Menü bzw. Link in die Zwischenablage) und QR-Code zum schnellen Weitergeben.
+- Drucken (eigenes Print-Stylesheet, zeigt nur Noten + Tablatur).
+- Viersprachige Oberfläche: 🇩🇪 🇫🇷 🇮🇹 🇬🇧 — per Flaggen-Klick, `?lang=fr` als Deeplink, Spracherkennung beim ersten Besuch.
+- Verlinkung zu [Benny Accordion](https://wdeu.github.io/benny-accordion/) (Knopf-Übepartner fürs eigene Instrument).
+- Impressum verlinkt im Footer (§5 DDG).
 
----
+-----
+
+## 🇫🇷 Ce que fait Soufflet
+
+Soufflet convertit un fichier MusicXML / .mxl en tablature à boutons (D.E.S.) affichée au-dessus des notes — entièrement dans le navigateur, sans serveur, sans installation de MuseScore. Continuation libre sous licence GPL-2.0 des plugins DiatonicTab de Jean-Michel Bencetti.
+
+Fonctions principales : 26 plans de clavier, reconnaissance d’accords en trois niveaux (symbole réel → accords de basse empilés → aucune info, signalée honnêtement), sélection de voix pour les partitions polyphoniques sur une même portée, lecture audio avec le timbre réel de l’accordéon (porté depuis Benny Accordion), barre de lecture verte avec défilement automatique, lecture/pause/stop, partage + QR code, impression, panneau de réglages repliable, persistance complète, interface en 4 langues (DE/FR/IT/EN).
+
+🔗 **En ligne : [wdeu.github.io/soufflet](https://wdeu.github.io/soufflet/)**
+
+-----
 
 ## Aufbau / Structure
 
 ```
-soufflet/
-├─ index.html              App (OSMD + fflate via CDN; siehe Vendoring unten)
-├─ des.js                 Kernel: RH-.keyboard parsen, Knopf → D.E.S.
-├─ direction.js           Akkord → Balgrichtung (aus LH-Bass-Datei), Filter
-├─ musicxml.js            Mini-XML-Parser + Melodie-mit-Akkorden + transcribe()
-├─ layouts.js             Dropdown-Datenmodell (lädt keyboards.json, 1 Fetch)
-├─ keyboards.json          Build-Artefakt: alle Layouts + Index (eingecheckt)
-├─ keyboards/              Quell-Layouts (.keyboard) — Community-Beiträge hierher
-│  ├─ RH_*.keyboard (17)   rechte Hand / main droite
-│  └─ LH_*.keyboard  (9)   linke Hand-Bässe / basses main gauche
-├─ tools/
-│  ├─ build-keyboards.mjs  keyboards/ → keyboards.json
-│  ├─ validate-keyboards.mjs  Layouts prüfen, Tippfehler melden
-│  └─ setup.sh             einmalig: GPL-2.0-Text holen, Skripte +x
-└─ raycast/                Raycast Script Commands (s. u.)
+index.html               — die App selbst (UI, Logik, Wiedergabe-Engine)
+des.js                    — D.E.S.-Notation, .keyboard-Parser (RH)
+direction.js              — Balgrichtung aus Akkordsymbolen, .keyboard-Parser (LH)
+musicxml.js               — MusicXML-Parser, Timing-/Akkord-Extraktion, transcribe()
+layouts.js                — Dropdown-Datenmodell für keyboards.json
+audio.js                  — Akkordeon-Synthesizer (aus Benny Accordion portiert)
+keyboards.json            — gebündelte 26 Layouts (RH+LH)
+package.json
+impressum.html
+site.webmanifest, *.png   — Favicon/Homescreen-Icons, og-image.png (Sharing-Vorschau)
+keyboards/                — Quell-Layouts (.keyboard), nur fürs Bauen relevant
+tools/                    — build-keyboards.mjs, validate-keyboards.mjs
+raycast/                  — Deploy-Skripte (siehe unten)
 ```
 
-**keyboards.json neu bauen / régénérer** (nach Änderungen in `keyboards/`):
+## Live & Deploy
+
+- **GitHub Pages** (Haupt-Adresse): <https://wdeu.github.io/soufflet/> — automatisch aktiv bei jedem Push auf `main`.
+- **IONOS-Spiegel** (`soufflet.wdeu.de`): geplant, noch nicht eingerichtet.
+
+### Deploy per Raycast (am Mac mini)
+
 ```
-node tools/build-keyboards.mjs
-node tools/validate-keyboards.mjs    # Layouts prüfen
+Soufflet · Deploy   (Raycast-Skript, raycast/soufflet-deploy.sh)
 ```
 
-## Raycast-Skripte / Scripts Raycast
+Baut `keyboards.json` neu, committet, pusht. Optionaler IONOS-Sync über `DEPLOY_IONOS=1` im Skript.
 
-Ordner als Raycast *Script Commands directory* hinzufügen. Repo-Pfad einmalig setzen:
-`export SOUFFLET_REPO=~/Projects/soufflet` (oder im Skript anpassen).
+### Deploy per Termius (vom iPhone, ohne Mac-Bildschirm)
 
-| Befehl | Wirkung |
-| --- | --- |
-| **Soufflet · Serve**  | Lokalen Server starten + Browser öffnen (Tuning-Loop). |
-| **Soufflet · Build keyboards.json** | Bündel aus `keyboards/` neu erzeugen. |
-| **Soufflet · Check layouts** | Alle Layouts parsen, Tippfehler melden. |
-| **Soufflet · Deploy** | Build + commit + push (GitHub Pages). IONOS-Variante im Skript. |
+SFTP-Upload der geänderten Datei(en) nach `~/Projects/soufflet/`, danach per SSH:
 
-> Für `soufflet.wdeu.de` via IONOS: in `raycast/soufflet-deploy.sh` `git push` durch deinen
-> `ionos-sync.sh`-Aufruf ersetzen (wie bei `inserate.wdeu.de`).
+```
+cd ~/Projects/soufflet && bash raycast/soufflet-deploy.sh "Commit-Nachricht"
+```
+
+Details: siehe `Termius.md`.
+
+### Build-Werkzeuge
+
+```
+node tools/build-keyboards.mjs       # keyboards/ -> keyboards.json
+node tools/validate-keyboards.mjs    # Konsistenzprüfung
+```
+
+## Wichtige technische Entscheidungen
+
+- **`.js` statt `.mjs`**: GitHub Pages (und viele Apache-Konfigurationen) liefern `.mjs` als `application/octet-stream` aus — der Browser verweigert dann den Modul-Import. Alle vier Module sind deshalb bewusst `.js` benannt.
+- **Kein `accept`-Attribut an den Datei-Inputs**: iOS graut Dateien aus, deren Endung (`.mxl`, `.keyboard`) es keinem bekannten Typ zuordnen kann — der Picker bleibt sonst leer.
+- **Nur `<sound tempo>`, nie die optische Metronomangabe**: bei punktierter Viertel (6/8) wäre der Bezugswert ein anderer; ein falsch gelesener Wert würde konsequent zu schnell/zu langsam abspielen, ohne dass es auffällt.
+- **Drei getrennte Genauigkeitsstufen für Akkorde** (echtes Symbol / Variante D / Variante A), nie geraten: eine falsch angezeigte Spielanweisung ist schädlicher als ein ehrlicher „nichts gefunden”-Hinweis.
 
 ## Vendoring (kein CDN-Lock-in)
 
-`index.html` lädt OSMD und fflate vorerst vom jsDelivr-CDN. Für Offline/Privacy beide ins Repo legen
-(`vendor/`) und die zwei `<script src=…>`-Zeilen umstellen; Versionen dabei pinnen.
+Aktuell via jsDelivr-CDN: OpenSheetMusicDisplay, fflate, QRCode.js. Geplant: lokal einbinden, um die Abhängigkeit von externen CDNs zu reduzieren (offener Punkt, siehe Roadmap).
 
 ## Lizenz & Credits / Licence & crédits
 
-**GPL-2.0-only.** Soufflet trägt dieselbe Lizenz wie das Ursprungswerk. Vollständigen Text holen:
-`bash tools/setup.sh`.
+GPL-2.0 — siehe `LICENSE`. Fortschreibung der DiatonicTab-Plugins von Jean-Michel Bencetti ([jmi.ovh/DiatonicTab](https://jmi.ovh/DiatonicTab)), mit seiner ausdrücklichen Ermutigung, die Logik zu studieren und sich anzueignen. Akkordeon-Klangsynthese 1:1 aus [Benny Accordion](https://wdeu.github.io/benny-accordion/) portiert (eigenes Projekt, eigene Spektralanalyse des realen Instruments).
 
-**DiatonicTab** © Jean-Michel Bencetti — die Logik (Akkord → Balgrichtung, Tastaturdaten-Format)
-ist aus seinen MuseScore-Plugins portiert. Repo: <https://github.com/JMiB-Fr-2020/DiatonicTab> ·
-Doku: <https://jmi.ovh/DiatonicTab>. Vor Veröffentlichung schriftliche Freigabe einholen und
-Bencetti hier prominent nennen.
-
-*La logique (sens du soufflet selon l'accord, format des plans de clavier) est portée de ses
-plugins MuseScore. Obtenir son accord écrit avant publication et le créditer ici.*
-
-**Datenherkunft / Provenance des données.** Die `.keyboard`-Plandateien stammen aus dem
-DiatonicTab-Umfeld und beschreiben reale Instrumenten-Layouts. MusicXML ist ein offenes
-W3C-Format; konvertiere nur legal erworbene Stücke — der Inhalt einzelner Partituren kann
-urheberrechtlich geschützt sein.
+Werner Deuer (wdeu) · Bad Emstal

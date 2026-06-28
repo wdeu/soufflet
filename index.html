@@ -64,6 +64,10 @@
   .playhead { position:absolute; width:3px; background:#2ecc71; border-radius:2px; opacity:0; pointer-events:none; transition:opacity .15s; box-shadow:0 0 4px rgba(46,204,113,.6); }
   .playhead.on { opacity:.85; }
   #btnPlay.is-playing { background:#2ecc71; color:#fff; border-color:#2ecc71; }
+  .mini-transport { position:fixed; right:14px; bottom:56px; display:none; gap:8px; z-index:40; }
+  .mini-transport.show { display:flex; }
+  .mini-transport button { width:46px; height:46px; border-radius:50%; border:1px solid var(--line); background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.18); font-size:19px; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .mini-transport button.is-playing { background:#2ecc71; color:#fff; border-color:#2ecc71; }
   #qrPop { position:fixed; inset:0; background:rgba(28,26,23,.55); display:none; align-items:center; justify-content:center; z-index:50; }
   #qrPop.open { display:flex; }
   #qrPop .qr-card { background:#fff; border-radius:14px; padding:20px; text-align:center; max-width:260px; }
@@ -143,6 +147,11 @@
 </div>
 
 <div id="stage"><div id="score"></div><div id="overlay"></div><div class="playhead" id="playhead"></div></div>
+
+<div class="mini-transport" id="miniTransport">
+  <button id="miniPlay" aria-label="Play/Pause"><span id="miniPlayIcon">▶</span></button>
+  <button id="miniStop" aria-label="Stop">■</button>
+</div>
 <div id="status"></div>
 <footer class="legal"><a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
 
@@ -566,6 +575,12 @@ function setTransportUI() {
   $("lblPlay2").textContent = isPlaying ? L().lbl_pause : L().lbl_play2;
   $("btnPlay").classList.toggle("is-playing", isPlaying);
   $("btnStop").disabled = !isPlaying && !pausedAtSec;
+
+  // Mini-Transport: bleibt fix im Bild, auch wenn Auto-Scroll den Kopfbereich
+  // mit den eigentlichen Buttons aus dem sichtbaren Bereich schiebt.
+  $("miniTransport").classList.toggle("show", isPlaying || !!pausedAtSec);
+  $("miniPlayIcon").textContent = isPlaying ? "⏸" : "▶";
+  $("miniPlay").classList.toggle("is-playing", isPlaying);
 }
 
 function playTransport() {
@@ -679,6 +694,8 @@ function openQR() {
 $("btnQR").addEventListener("click", openQR);
 $("btnPlay").addEventListener("click", () => { isPlaying ? pauseTransport() : playTransport(); });
 $("btnStop").addEventListener("click", stopTransport);
+$("miniPlay").addEventListener("click", () => { isPlaying ? pauseTransport() : playTransport(); });
+$("miniStop").addEventListener("click", stopTransport);
 $("btnPrint").addEventListener("click", () => window.print());
 $("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
 $("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });

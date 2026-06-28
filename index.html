@@ -138,7 +138,7 @@
 
 <div id="stage"><div id="score"></div><div id="overlay"></div></div>
 <div id="status"></div>
-<footer class="legal"><a href="impressum.html" id="lblImpressum"></a></footer>
+<footer class="legal"><a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
 
 <script type="module">
 import { parseKeyboard }   from "./des.js";
@@ -258,6 +258,7 @@ const statusEl = $("status"), overlay = $("overlay");
 const setStatus = (m, warn=false) => { statusEl.innerHTML = m; statusEl.classList.toggle("warn", warn); };
 
 function applyI18n() {
+  $("verSpan").textContent = "v" + APP_VERSION;
   const T = L();
   document.documentElement.lang = lang;
   $("tagline").textContent = T.tagline;
@@ -296,6 +297,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
+const APP_VERSION = "1.1.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let rhKb = parseKeyboard(FALLBACK_RH_OBJ());
 let lhKb = parseLHKeyboard(FALLBACK_LH_OBJ());

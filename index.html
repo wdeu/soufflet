@@ -125,8 +125,9 @@
 </div>
 
 <div class="share-row">
-  <button id="btnPlay">▶ <span id="lblPlay2"></span></button>
+  <button id="btnPlay"><span id="playIcon">▶</span> <span id="lblPlay2"></span></button>
   <button id="btnStop" disabled>■ <span id="lblStop"></span></button>
+  <span id="timeReadout" style="font:12px/1 -apple-system,sans-serif; color:#6b6457; min-width:74px;"></span>
   <button id="btnShare">🔗 <span id="lblShare"></span></button>
   <button id="btnQR">▦ <span id="lblQR"></span></button>
   <button id="btnPrint">🖨 <span id="lblPrint"></span></button>
@@ -179,6 +180,7 @@ const STR = {
     st_bassderived:()=>"Akkordwurzeln aus Bass-Mehrkl\u00e4ngen abgeleitet (kein <harmony>-Symbol im St\u00fcck \u2013 Variante D, 1 Akkord/Takt)",
     chordd_tip:()=>"abgeleitete Akkordwurzel (Variante D) \u2013 kein Symbol aus der Partitur",
     lbl_play2:"Abspielen", lbl_stop:"Stopp",
+    lbl_pause:"Pause",
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -205,6 +207,7 @@ const STR = {
     st_bassderived:()=>"Fondamentales d\u00e9duites des accords de la basse (aucun symbole d\u2019accord dans la partition \u2013 m\u00e9thode D, 1 accord/mesure)",
     chordd_tip:()=>"fondamentale d\u00e9duite (m\u00e9thode D) \u2013 pas un symbole de la partition",
     lbl_play2:"Lecture", lbl_stop:"Stop",
+    lbl_pause:"Pause",
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -231,6 +234,7 @@ const STR = {
     st_bassderived:()=>"Chord roots derived from bass-staff chords (no chord symbols in this score \u2013 method D, 1 chord/measure)",
     chordd_tip:()=>"derived chord root (method D) \u2013 not a symbol from the score",
     lbl_play2:"Play", lbl_stop:"Stop",
+    lbl_pause:"Pause",
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -257,6 +261,7 @@ const STR = {
     st_bassderived:()=>"Fondamentali ricavate dagli accordi del basso (nessun simbolo di accordo nella partitura \u2013 metodo D, 1 accordo/battuta)",
     chordd_tip:()=>"fondamentale dedotta (metodo D) \u2013 non un simbolo della partitura",
     lbl_play2:"Riproduci", lbl_stop:"Stop",
+    lbl_pause:"Pausa",
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -284,6 +289,7 @@ function applyI18n() {
   $("lblPanel").textContent = T.lbl_panel;
   $("lblShare").textContent = T.lbl_share; $("lblQR").textContent = T.lbl_qr; $("lblPrint").textContent = T.lbl_print;
   $("lblPlay2").textContent = T.lbl_play2; $("lblStop").textContent = T.lbl_stop;
+  setTransportUI();
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
   updatePanelChip();
 }
@@ -313,6 +319,7 @@ let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map();
 let audioCtx = null, scheduledNodes = [], playStartCtxTime = 0, rafId = null, isPlaying = false;
+let pausedAtSec = 0;   // >0 nur während einer aktiven Pause; 0 = gestoppt/von vorn
 let rhKb = parseKeyboard(FALLBACK_RH_OBJ());
 let lhKb = parseLHKeyboard(FALLBACK_LH_OBJ());
 let currentXml = null;
@@ -474,15 +481,15 @@ function pitchName(step, alter) {
   return step + (alter > 0 ? "#".repeat(alter) : alter < 0 ? "b".repeat(-alter) : "");
 }
 
-function scheduleAudio() {
+function scheduleAudio(fromSec = 0) {
   if (!audioCtx) audioCtx = createCtx();
   const leadIn = 0.12;   // kleiner Vorlauf, damit der erste Ton nicht "verschluckt" wird
-  playStartCtxTime = audioCtx.currentTime + leadIn;
+  playStartCtxTime = audioCtx.currentTime + leadIn - fromSec;   // bei fromSec=0 normaler Start, sonst Fortsetzung ab Pause-Punkt
   scheduledNodes = [];
 
-  // Diskant: jede Note einzeln, exakt zu ihrem startSec.
+  // Diskant: jede Note einzeln, exakt zu ihrem startSec — nur Noten ab fromSec (Resume überspringt Vergangenes).
   for (const ev of lastTab) {
-    if (ev.rest || !ev.startSec && ev.startSec !== 0) continue;
+    if (ev.rest || ev.startSec < fromSec) continue;
     const freq = noteToFrequency(pitchName(ev.step, ev.alter), ev.octave);
     if (!freq) continue;
     const node = playMelodyNote(audioCtx, freq, playStartCtxTime + ev.startSec, Math.max(ev.durationSec * 0.92, 0.05));
@@ -496,6 +503,7 @@ function scheduleAudio() {
     .map(m => ({ m, t: Math.min(...lastTab.filter(e => !e.rest && e.measure === m).map(e => e.startSec)) }));
   for (let i = 0; i < measureStarts.length; i++) {
     const { m, t } = measureStarts[i];
+    if (t < fromSec) continue;
     const root = lastAudioBass.get(m);
     if (!root) continue;
     const next = measureStarts[i + 1];
@@ -537,29 +545,56 @@ function updatePlayhead(sec) {
   }
 }
 
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+}
+
 function tick() {
   if (!isPlaying) return;
-  const sec = audioCtx.currentTime - playStartCtxTime;
-  updatePlayhead(Math.max(sec, 0));
-  if (sec >= totalDurationSec() + 0.4) { stopPlayback(); return; }
+  const sec = Math.max(audioCtx.currentTime - playStartCtxTime, 0);
+  updatePlayhead(sec);
+  $("timeReadout").textContent = fmtTime(sec) + " / " + fmtTime(totalDurationSec());
+  if (sec >= totalDurationSec() + 0.4) { stopTransport(); return; }
   rafId = requestAnimationFrame(tick);
 }
 
-function startPlayback() {
+/* ---------- Transport: Play / Pause / Stop ---------- */
+
+function setTransportUI() {
+  $("playIcon").textContent = isPlaying ? "⏸" : "▶";
+  $("lblPlay2").textContent = isPlaying ? L().lbl_pause : L().lbl_play2;
+  $("btnPlay").classList.toggle("is-playing", isPlaying);
+  $("btnStop").disabled = !isPlaying && !pausedAtSec;
+}
+
+function playTransport() {
   if (!currentXml || !lastTab.length) return;
-  scheduleAudio();
+  scheduleAudio(pausedAtSec);
+  pausedAtSec = 0;
   isPlaying = true;
-  $("btnPlay").classList.add("is-playing"); $("btnPlay").disabled = true; $("btnStop").disabled = false;
+  setTransportUI();
   rafId = requestAnimationFrame(tick);
 }
 
-function stopPlayback() {
+function pauseTransport() {
+  if (!isPlaying) return;
+  pausedAtSec = Math.max(audioCtx.currentTime - playStartCtxTime, 0);
   isPlaying = false;
   if (rafId) cancelAnimationFrame(rafId);
   if (audioCtx) stopAllNodes(scheduledNodes, audioCtx);
   scheduledNodes = [];
-  $("btnPlay").classList.remove("is-playing"); $("btnPlay").disabled = false; $("btnStop").disabled = true;
+  setTransportUI();   // Balken bleibt an seiner Position stehen (kein .remove("on"))
+}
+
+function stopTransport() {
+  isPlaying = false; pausedAtSec = 0;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (audioCtx) stopAllNodes(scheduledNodes, audioCtx);
+  scheduledNodes = [];
+  setTransportUI();
   $("playhead").classList.remove("on");
+  $("timeReadout").textContent = "";
 }
 
 function applySelection(div, i) {
@@ -579,7 +614,7 @@ function wireFileButton(btnId, inputId, onPick) {
 }
 
 wireFileButton("btnScore", "fileScore", async (f) => {
-  try { stopPlayback(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
+  try { stopTransport(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 });
 $("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
@@ -604,7 +639,7 @@ $("flags").addEventListener("click", (e) => {
 
 /* ---------- Alles zurücksetzen (Wüste Gobi) ---------- */
 $("resetSel").addEventListener("click", () => {
-  stopPlayback();
+  stopTransport();
   try { localStorage.removeItem(LS_KEY); } catch {}
   selections.clear(); currentXml = null;
   $("typeJeu").value = "3"; $("sensSol").value = "3"; $("sensFa").value = "3";
@@ -642,8 +677,8 @@ function openQR() {
   $("qrPop").classList.add("open");
 }
 $("btnQR").addEventListener("click", openQR);
-$("btnPlay").addEventListener("click", startPlayback);
-$("btnStop").addEventListener("click", stopPlayback);
+$("btnPlay").addEventListener("click", () => { isPlaying ? pauseTransport() : playTransport(); });
+$("btnStop").addEventListener("click", stopTransport);
 $("btnPrint").addEventListener("click", () => window.print());
 $("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
 $("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });

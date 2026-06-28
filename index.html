@@ -119,6 +119,7 @@
   <div class="ctl"><label id="lblCustom"></label><button type="button" class="filebtn" id="btnCustom"></button><input type="file" id="fileCustom" hidden /></div>
   <div class="ctl"><label id="lblRH"></label><select id="rhSel"></select></div>
   <div class="ctl"><label id="lblLH"></label><select id="lhSel"></select></div>
+  <div class="ctl" id="voiceCtl" style="display:none"><label id="lblVoice"></label><select id="voiceSel"></select></div>
   <div class="ctl"><label id="lblPlay"></label>
     <select id="typeJeu"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
   <div class="ctl"><label id="lblSol"></label><select id="sensSol"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
@@ -190,6 +191,7 @@ const STR = {
     chordd_tip:()=>"abgeleitete Akkordwurzel (Variante D) \u2013 kein Symbol aus der Partitur",
     lbl_play2:"Abspielen", lbl_stop:"Stopp",
     lbl_pause:"Pause",
+    lbl_voice:"Stimme (Diskant)", voice_opt:v=>`Stimme ${v}`,
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -217,6 +219,7 @@ const STR = {
     chordd_tip:()=>"fondamentale d\u00e9duite (m\u00e9thode D) \u2013 pas un symbole de la partition",
     lbl_play2:"Lecture", lbl_stop:"Stop",
     lbl_pause:"Pause",
+    lbl_voice:"Voix (aigu)", voice_opt:v=>`Voix ${v}`,
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -244,6 +247,7 @@ const STR = {
     chordd_tip:()=>"derived chord root (method D) \u2013 not a symbol from the score",
     lbl_play2:"Play", lbl_stop:"Stop",
     lbl_pause:"Pause",
+    lbl_voice:"Voice (treble)", voice_opt:v=>`Voice ${v}`,
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -271,6 +275,7 @@ const STR = {
     chordd_tip:()=>"fondamentale dedotta (metodo D) \u2013 non un simbolo della partitura",
     lbl_play2:"Riproduci", lbl_stop:"Stop",
     lbl_pause:"Pausa",
+    lbl_voice:"Voce (acuto)", voice_opt:v=>`Voce ${v}`,
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -287,7 +292,8 @@ function applyI18n() {
   document.documentElement.lang = lang;
   $("tagline").textContent = T.tagline;
   $("lblScore").textContent = T.lbl_score;
-  $("lblRH").textContent = T.lbl_rh; $("lblLH").textContent = T.lbl_lh; $("lblCustom").textContent = T.lbl_custom;
+  $("lblRH").textContent = T.lbl_rh; $("lblLH").textContent = T.lbl_lh; $("lblCustom").textContent = T.lbl_custom; $("lblVoice").textContent = T.lbl_voice;
+  for (const opt of $("voiceSel").options) opt.textContent = T.voice_opt(opt.value);
   $("lblPlay").textContent = T.lbl_play; $("lblSol").textContent = T.lbl_sol; $("lblFa").textContent = T.lbl_fa;
   $("lblOne").textContent = T.lbl_one; $("lblZoom").textContent = T.lbl_zoom;
   const pj = $("typeJeu"); pj.options[0].textContent = T.play_cross; pj.options[1].textContent = T.play_g; pj.options[2].textContent = T.play_c;
@@ -314,7 +320,7 @@ function saveState() {
   const base = {
     lang, rh: $("rhSel").value, lh: $("lhSel").value,
     typeJeu: $("typeJeu").value, sensSol: $("sensSol").value, sensFa: $("sensFa").value,
-    onePoss: $("onePoss").checked, zoom: $("zoom").value,
+    onePoss: $("onePoss").checked, zoom: $("zoom").value, voice: $("voiceSel").value,
     scoreName: $("btnScore").classList.contains("has-file") ? $("btnScore").textContent : "",
     selections: Object.fromEntries(selections),
   };
@@ -340,7 +346,25 @@ function FALLBACK_LH_OBJ() { return {"2sens":"-F-G-E#-","Pousse":"-C-E-B#-","Tir
 const options = () => ({
   typeJeu: Number($("typeJeu").value), sensSol: Number($("sensSol").value),
   sensFa: Number($("sensFa").value), onePossibility: $("onePoss").checked,
+  voice: $("voiceSel").value || undefined,
 });
+
+// Stimmen-Auswahl nur beim LADEN einer neuen Partitur (neu) befüllen — niemals bei
+// routinemäßigem Re-Render (Zoom, Layout-Wechsel, Sprache), sonst würde jede manuelle
+// Auswahl sofort wieder zurückgesetzt. Erscheint nur, wenn das System wirklich mehr
+// als eine Stimme enthält (z.B. Melodie + gehaltene Begleitstimme im selben System).
+function populateVoiceSelector(voices) {
+  const ctl = $("voiceCtl"), sel = $("voiceSel");
+  sel.innerHTML = "";
+  if (!voices || voices.length < 2) { ctl.style.display = "none"; return; }
+  for (const v of voices) {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = L().voice_opt(v);
+    sel.appendChild(o);
+  }
+  sel.value = voices[0];   // Default = dieselbe "erste Stimme", die auch die Heuristik wählen würde
+  ctl.style.display = "";
+}
 
 /* ---------- Init: Sprache + Persistenz wiederherstellen ---------- */
 (async function init() {
@@ -378,6 +402,7 @@ const options = () => ({
     try {
       currentXml = saved.xml; ensureOsmd(); await osmd.load(currentXml);
       if (saved.scoreName) { const b = $("btnScore"); b.textContent = saved.scoreName; b.title = saved.scoreName; b.classList.add("has-file"); }
+      try { populateVoiceSelector(transcribe(rhKb, lhKb, currentXml, options()).voicesInStaff); if (saved.voice) $("voiceSel").value = saved.voice; } catch {}
       await renderAll(); collapsePanel();
     } catch (e) { setStatus(L().st_score_err(e.message), true); }
   }
@@ -629,9 +654,10 @@ function wireFileButton(btnId, inputId, onPick) {
 }
 
 wireFileButton("btnScore", "fileScore", async (f) => {
-  try { stopTransport(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
+  try { stopTransport(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); try { populateVoiceSelector(transcribe(rhKb, lhKb, currentXml, options()).voicesInStaff); } catch {} await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 });
+$("voiceSel").addEventListener("change", () => { selections.clear(); placeOverlay(); saveState(); });
 $("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
 $("lhSel").addEventListener("change", (e) => { if (bundle) { lhKb = getLH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
 wireFileButton("btnCustom", "fileCustom", async (f) => {

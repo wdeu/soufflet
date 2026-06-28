@@ -252,19 +252,20 @@ export function melodyWithChords(xmlString, options = {}) {
   return { title: txt(findFirst(score, "movement-title")) || txt(findFirst(score, "credit-words")),
            parts: parts.map(p => ({ id: p.attrs.id, name: partNames[p.attrs.id] || "" })),
            events, chordSource, audioBass,
-           tempo: tempo || DEFAULT_TEMPO, tempoSource: tempoFound ? "sound" : "default" };
+           tempo: tempo || DEFAULT_TEMPO, tempoSource: tempoFound ? "sound" : "default",
+           voicesInStaff: [...allVoicesInStaff].sort((a, b) => Number(a) - Number(b)) };
 }
 
 // ---------- 4. Komplett-Durchlauf: MusicXML -> D.E.S. -----------------------
 // rh: parseKeyboard(); lh: parseLHKeyboard()|null; opts -> melodyWithChords + resolve.
 export function transcribe(rh, lh, xmlString, opts = {}) {
-  const { title, parts, events, chordSource, audioBass, tempo, tempoSource } = melodyWithChords(xmlString, opts);
+  const { title, parts, events, chordSource, audioBass, tempo, tempoSource, voicesInStaff } = melodyWithChords(xmlString, opts);
   const tab = events.map(ev => {
     if (ev.rest) return { ...ev, des: [] };
     const r = resolve(rh, lh, { step: ev.step, alter: ev.alter, octave: ev.octave }, ev.chord, opts);
     return { ...ev, key: r.key, direction: r.direction, des: r.des };
   });
-  return { title, parts, tab, chordSource, audioBass, tempo, tempoSource };
+  return { title, parts, tab, chordSource, audioBass, tempo, tempoSource, voicesInStaff };
 }
 
 // ---------- .mxl-Hinweis (Browser-Glue, kein Node-Test) ---------------------

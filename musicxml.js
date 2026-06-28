@@ -111,6 +111,41 @@ function deriveBassChordsByMeasure(part, melodyStaff) {
   return map;
 }
 
+// ---------- 2c. Audio-Begleitung: lockerer Fallback (wie Benny Accordion) ---
+// NUR für die Hör-Begleitung beim Abspielen, NIE für die D.E.S.-Tablatur.
+// Reihenfolge wie in Benny: 1) echtes <harmony>-Symbol (gilt bis zum nächsten
+// Wechsel), 2) sonst der TIEFSTE Ton im ganzen Takt in der Begleitstimme —
+// auch ein einzelner, nicht gestapelter Ton (z.B. Barock-Kontrapunkt-Bass wie
+// bei Rameau). Bewusst großzügiger als deriveBassChordsByMeasure: eine leicht
+// unpassende Begleitnote beim Hören stört weniger als eine falsch angezeigte
+// Spielanweisung in der Tablatur.
+function deriveAudioBassByMeasure(part, melodyStaff) {
+  const map = new Map();
+  let currentChord = null;
+  let mIndex = 0;
+  for (const measure of kids(part, "measure")) {
+    mIndex++;
+    let lowest = null;   // {step, alter, midi} — tiefster Begleitton im ganzen Takt
+    for (const el of measure.children) {
+      if (el.tag === "harmony") { currentChord = harmonyToSymbol(el); continue; }
+      if (el.tag !== "note") continue;
+      const staff = txt(kid(el, "staff"));
+      if (melodyStaff && staff === String(melodyStaff)) continue;   // Melodiestimme zählt nicht als Begleitung
+      const pitch = kid(el, "pitch");
+      if (!pitch) continue;
+      const step = txt(kid(pitch, "step"));
+      const alter = Number(txt(kid(pitch, "alter")) || 0);
+      const octave = Number(txt(kid(pitch, "octave")));
+      const midi = octave * 12 + pitchOffset(step, alter);
+      if (!lowest || midi < lowest.midi) lowest = { step, alter, midi };
+    }
+    let root = currentChord;
+    if (!root && lowest) root = lowest.step + (lowest.alter > 0 ? "#".repeat(lowest.alter) : lowest.alter < 0 ? "b".repeat(-lowest.alter) : "");
+    if (root) map.set(mIndex, root);
+  }
+  return map;
+}
+
 // ---------- 3. Melodie-mit-Akkorden-Strom -----------------------------------
 // options: { partId, voice, staff, includeRests }
 export function melodyWithChords(xmlString, options = {}) {
@@ -140,6 +175,7 @@ export function melodyWithChords(xmlString, options = {}) {
   const hasAnyHarmony = !!findFirst(part, "harmony");
   const bassChordByMeasure = (!hasAnyHarmony && allStaves.size > 1) ? deriveBassChordsByMeasure(part, effectiveStaff) : null;
   const chordSource = hasAnyHarmony ? "harmony" : (bassChordByMeasure?.size ? "bass" : "none");
+  const audioBass = (allStaves.size > 1) ? deriveAudioBassByMeasure(part, effectiveStaff) : new Map();   // unabhängig von chordSource/D.E.S. — eigener, lockerer Kanal fürs Hören; nur bei echten 2-System-Stücken
 
   const events = [];
   let currentChord = null;
@@ -175,19 +211,19 @@ export function melodyWithChords(xmlString, options = {}) {
   }
   return { title: txt(findFirst(score, "movement-title")) || txt(findFirst(score, "credit-words")),
            parts: parts.map(p => ({ id: p.attrs.id, name: partNames[p.attrs.id] || "" })),
-           events, chordSource };
+           events, chordSource, audioBass };
 }
 
 // ---------- 4. Komplett-Durchlauf: MusicXML -> D.E.S. -----------------------
 // rh: parseKeyboard(); lh: parseLHKeyboard()|null; opts -> melodyWithChords + resolve.
 export function transcribe(rh, lh, xmlString, opts = {}) {
-  const { title, parts, events, chordSource } = melodyWithChords(xmlString, opts);
+  const { title, parts, events, chordSource, audioBass } = melodyWithChords(xmlString, opts);
   const tab = events.map(ev => {
     if (ev.rest) return { ...ev, des: [] };
     const r = resolve(rh, lh, { step: ev.step, alter: ev.alter, octave: ev.octave }, ev.chord, opts);
     return { ...ev, key: r.key, direction: r.direction, des: r.des };
   });
-  return { title, parts, tab, chordSource };
+  return { title, parts, tab, chordSource, audioBass };
 }
 
 // ---------- .mxl-Hinweis (Browser-Glue, kein Node-Test) ---------------------

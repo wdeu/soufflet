@@ -177,6 +177,18 @@ export function melodyWithChords(xmlString, options = {}) {
   const chordSource = hasAnyHarmony ? "harmony" : (bassChordByMeasure?.size ? "bass" : "none");
   const audioBass = (allStaves.size > 1) ? deriveAudioBassByMeasure(part, effectiveStaff) : new Map();   // unabhängig von chordSource/D.E.S. — eigener, lockerer Kanal fürs Hören; nur bei echten 2-System-Stücken
 
+  // Timing für die Wiedergabe: <divisions> (Ticks pro Viertel) und <sound tempo>
+  // (Viertel pro Minute — laut MusicXML-Spec NORMIERT, unabhängig von der
+  // optischen Metronomangabe). Bewusst NICHT die optische <metronome>-Marke
+  // genutzt: bei punktierten Vierteln (6/8, typisch für Mazurka/Bourrée) wäre
+  // der Bezugswert ein anderer — ein falsch gelesener Wert würde das Stück
+  // konsequent zu schnell/zu langsam abspielen, ohne dass es auffällt.
+  const DEFAULT_TEMPO = 120;
+  let divisions = 1, tempo = null, tempoFound = false;
+  let elapsedSec = 0, pendingAdvance = 0;
+  const commitPending = () => { elapsedSec += pendingAdvance; pendingAdvance = 0; };
+  const toSec = ticks => (ticks / (divisions || 1)) * 60 / (tempo || DEFAULT_TEMPO);
+
   const events = [];
   let currentChord = null;
   let chordJustChanged = false;   // true für das eine Event, bei dem OSMD den Akkordsymbol-Text zeichnet
@@ -186,6 +198,9 @@ export function melodyWithChords(xmlString, options = {}) {
     if (bassChordByMeasure) currentChord = bassChordByMeasure.get(mIndex) ?? null;   // kein chordJustChanged: kein sichtbares Symbol zum Umgehen
     for (const el of measure.children) {
       if (el.tag === "harmony") { currentChord = harmonyToSymbol(el); chordJustChanged = true; continue; }
+      if (el.tag === "attributes") { const d = kid(el, "divisions"); if (d) divisions = Number(txt(d)) || divisions; continue; }
+      if (el.tag === "direction") { const snd = kid(el, "sound"); if (snd?.attrs.tempo) { tempo = Number(snd.attrs.tempo) || tempo; tempoFound = true; } continue; }
+      if (el.tag === "sound") { if (el.attrs.tempo) { tempo = Number(el.attrs.tempo) || tempo; tempoFound = true; } continue; }
       if (el.tag !== "note") continue;
       const voice = txt(kid(el, "voice"));
       const staff = txt(kid(el, "staff"));
@@ -193,9 +208,17 @@ export function melodyWithChords(xmlString, options = {}) {
       if (effectiveStaff && staff && staff !== String(effectiveStaff)) continue;
       const isRest = !!kid(el, "rest");
       const inChord = !!kid(el, "chord");          // mit Vornote gestapelt (Mehrklang)
-      if (isRest) { if (options.includeRests) events.push({ measure: mIndex, rest: true, chord: currentChord, chordChange: chordJustChanged }); chordJustChanged = false; continue; }
+      const durSec = toSec(Number(txt(kid(el, "duration")) || 0));
+      if (isRest) {
+        commitPending();
+        if (options.includeRests) events.push({ measure: mIndex, rest: true, chord: currentChord, chordChange: chordJustChanged, startSec: elapsedSec, durationSec: durSec });
+        elapsedSec += durSec; chordJustChanged = false; continue;
+      }
       const pitch = kid(el, "pitch");
       if (!pitch) continue;                        // unpitched/percussion überspringen
+      if (!inChord) commitPending();                // neue Gruppe beginnt -> vorige Akkord-Gruppe auf der Zeitachse "verbuchen"
+      const startSec = elapsedSec;
+      pendingAdvance = Math.max(pendingAdvance, durSec);
       events.push({
         measure: mIndex,
         step: txt(kid(pitch, "step")),
@@ -205,25 +228,27 @@ export function melodyWithChords(xmlString, options = {}) {
         chordChange: chordJustChanged,
         inChord, voice, staff,
         duration: Number(txt(kid(el, "duration")) || 0),
+        startSec, durationSec: durSec,
       });
       chordJustChanged = false;
     }
   }
   return { title: txt(findFirst(score, "movement-title")) || txt(findFirst(score, "credit-words")),
            parts: parts.map(p => ({ id: p.attrs.id, name: partNames[p.attrs.id] || "" })),
-           events, chordSource, audioBass };
+           events, chordSource, audioBass,
+           tempo: tempo || DEFAULT_TEMPO, tempoSource: tempoFound ? "sound" : "default" };
 }
 
 // ---------- 4. Komplett-Durchlauf: MusicXML -> D.E.S. -----------------------
 // rh: parseKeyboard(); lh: parseLHKeyboard()|null; opts -> melodyWithChords + resolve.
 export function transcribe(rh, lh, xmlString, opts = {}) {
-  const { title, parts, events, chordSource, audioBass } = melodyWithChords(xmlString, opts);
+  const { title, parts, events, chordSource, audioBass, tempo, tempoSource } = melodyWithChords(xmlString, opts);
   const tab = events.map(ev => {
     if (ev.rest) return { ...ev, des: [] };
     const r = resolve(rh, lh, { step: ev.step, alter: ev.alter, octave: ev.octave }, ev.chord, opts);
     return { ...ev, key: r.key, direction: r.direction, des: r.des };
   });
-  return { title, parts, tab, chordSource, audioBass };
+  return { title, parts, tab, chordSource, audioBass, tempo, tempoSource };
 }
 
 // ---------- .mxl-Hinweis (Browser-Glue, kein Node-Test) ---------------------

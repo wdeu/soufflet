@@ -61,6 +61,9 @@
   .share-row { display:flex; align-items:center; gap:10px; padding:8px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
   .share-row button { font:inherit; height:30px; padding:0 12px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; display:flex; align-items:center; gap:6px; }
   .share-row button:hover { border-color:var(--accent); }
+  .playhead { position:absolute; width:3px; background:#2ecc71; border-radius:2px; opacity:0; pointer-events:none; transition:opacity .15s; box-shadow:0 0 4px rgba(46,204,113,.6); }
+  .playhead.on { opacity:.85; }
+  #btnPlay.is-playing { background:#2ecc71; color:#fff; border-color:#2ecc71; }
   #qrPop { position:fixed; inset:0; background:rgba(28,26,23,.55); display:none; align-items:center; justify-content:center; z-index:50; }
   #qrPop.open { display:flex; }
   #qrPop .qr-card { background:#fff; border-radius:14px; padding:20px; text-align:center; max-width:260px; }
@@ -122,6 +125,8 @@
 </div>
 
 <div class="share-row">
+  <button id="btnPlay">▶ <span id="lblPlay2"></span></button>
+  <button id="btnStop" disabled>■ <span id="lblStop"></span></button>
   <button id="btnShare">🔗 <span id="lblShare"></span></button>
   <button id="btnQR">▦ <span id="lblQR"></span></button>
   <button id="btnPrint">🖨 <span id="lblPrint"></span></button>
@@ -136,7 +141,7 @@
   </div>
 </div>
 
-<div id="stage"><div id="score"></div><div id="overlay"></div></div>
+<div id="stage"><div id="score"></div><div id="overlay"></div><div class="playhead" id="playhead"></div></div>
 <div id="status"></div>
 <footer class="legal"><a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
 
@@ -145,6 +150,7 @@ import { parseKeyboard }   from "./des.js";
 import { parseLHKeyboard } from "./direction.js";
 import { transcribe }      from "./musicxml.js";
 import { loadKeyboards, rhEntries, lhEntries, getRH, getLH, fillSelect, detectKind } from "./layouts.js";
+import { createCtx, playMelodyNote, playBassChord, stopAllNodes, noteToFrequency } from "./audio.js";
 
 /* ---------- i18n (DE / FR / EN) ---------- */
 const STR = {
@@ -172,6 +178,7 @@ const STR = {
     lbl_print:"Drucken",
     st_bassderived:()=>"Akkordwurzeln aus Bass-Mehrkl\u00e4ngen abgeleitet (kein <harmony>-Symbol im St\u00fcck \u2013 Variante D, 1 Akkord/Takt)",
     chordd_tip:()=>"abgeleitete Akkordwurzel (Variante D) \u2013 kein Symbol aus der Partitur",
+    lbl_play2:"Abspielen", lbl_stop:"Stopp",
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
@@ -197,6 +204,7 @@ const STR = {
     lbl_print:"Imprimer",
     st_bassderived:()=>"Fondamentales d\u00e9duites des accords de la basse (aucun symbole d\u2019accord dans la partition \u2013 m\u00e9thode D, 1 accord/mesure)",
     chordd_tip:()=>"fondamentale d\u00e9duite (m\u00e9thode D) \u2013 pas un symbole de la partition",
+    lbl_play2:"Lecture", lbl_stop:"Stop",
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
@@ -222,6 +230,7 @@ const STR = {
     lbl_print:"Print",
     st_bassderived:()=>"Chord roots derived from bass-staff chords (no chord symbols in this score \u2013 method D, 1 chord/measure)",
     chordd_tip:()=>"derived chord root (method D) \u2013 not a symbol from the score",
+    lbl_play2:"Play", lbl_stop:"Stop",
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
@@ -247,6 +256,7 @@ const STR = {
     lbl_print:"Stampa",
     st_bassderived:()=>"Fondamentali ricavate dagli accordi del basso (nessun simbolo di accordo nella partitura \u2013 metodo D, 1 accordo/battuta)",
     chordd_tip:()=>"fondamentale dedotta (metodo D) \u2013 non un simbolo della partitura",
+    lbl_play2:"Riproduci", lbl_stop:"Stop",
   },
 };
 const pickLang = code => { const c = (code||"").toLowerCase().slice(0,2); return ["de","fr","en","it"].includes(c) ? c : "de"; };
@@ -273,6 +283,7 @@ function applyI18n() {
   document.querySelectorAll(".flag").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
   $("lblPanel").textContent = T.lbl_panel;
   $("lblShare").textContent = T.lbl_share; $("lblQR").textContent = T.lbl_qr; $("lblPrint").textContent = T.lbl_print;
+  $("lblPlay2").textContent = T.lbl_play2; $("lblStop").textContent = T.lbl_stop;
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
   updatePanelChip();
 }
@@ -299,6 +310,9 @@ const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) |
 
 const APP_VERSION = "1.1.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
+let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
+let lastTab = [], lastAudioBass = new Map();
+let audioCtx = null, scheduledNodes = [], playStartCtxTime = 0, rafId = null, isPlaying = false;
 let rhKb = parseKeyboard(FALLBACK_RH_OBJ());
 let lhKb = parseLHKeyboard(FALLBACK_LH_OBJ());
 let currentXml = null;
@@ -403,17 +417,20 @@ function placeOverlay() {
   const U = 10 * osmd.zoom;
   let tab;
   let chordSource;
-  try { const res = transcribe(rhKb, lhKb, currentXml, options()); chordSource = res.chordSource; tab = res.tab.filter(e => !e.rest); }
+  try { const res = transcribe(rhKb, lhKb, currentXml, options()); chordSource = res.chordSource; tab = res.tab.filter(e => !e.rest); lastAudioBass = res.audioBass; }
   catch (e) { setStatus(L().st_transcribe_err(e.message), true); return; }
+  lastTab = tab;
   const gnotes = collectGraphicalNotes(0);
   const n = Math.min(gnotes.length, tab.length);
+  notePositions = [];   // Quelle für Wiedergabe-Engine: x/y + Timing pro angezeigter Note, unabhängig von D.E.S.-Spielbarkeit
   let lastChordMeasureShown = null;   // Variante D: Hinweistext einmal pro Takt, nicht pro Note
   for (let i = 0; i < n; i++) {
     const ev = tab[i];
-    if (!ev.des || ev.des.length === 0) continue;
     const { se, gm } = gnotes[i];
     const x = se.PositionAndShape.AbsolutePosition.x * U;
     const yTop = gm.PositionAndShape.AbsolutePosition.y * U;
+    notePositions.push({ x, yTop, startSec: ev.startSec, durationSec: ev.durationSec, measure: ev.measure });
+    if (!ev.des || ev.des.length === 0) continue;
     const chordHeadroom = ev.chordChange ? 2.2 * U : 0;   // weicht über Akkordsymbolen (z.B. "Am") nach oben aus
     const div = document.createElement("div");
     div.className = "des"; div.style.left = x + "px"; div.style.top = (yTop - 4 - chordHeadroom) + "px";
@@ -452,6 +469,99 @@ function placeOverlay() {
   setStatus(L().st_notes(n, rhKb.description, lhKb.description) + warn + chordHint);
 }
 
+/* ---------- Wiedergabe-Engine: Audio (Schritt 1-3) + grüner Laufbalken (Schritt 4) ---------- */
+function pitchName(step, alter) {
+  return step + (alter > 0 ? "#".repeat(alter) : alter < 0 ? "b".repeat(-alter) : "");
+}
+
+function scheduleAudio() {
+  if (!audioCtx) audioCtx = createCtx();
+  const leadIn = 0.12;   // kleiner Vorlauf, damit der erste Ton nicht "verschluckt" wird
+  playStartCtxTime = audioCtx.currentTime + leadIn;
+  scheduledNodes = [];
+
+  // Diskant: jede Note einzeln, exakt zu ihrem startSec.
+  for (const ev of lastTab) {
+    if (ev.rest || !ev.startSec && ev.startSec !== 0) continue;
+    const freq = noteToFrequency(pitchName(ev.step, ev.alter), ev.octave);
+    if (!freq) continue;
+    const node = playMelodyNote(audioCtx, freq, playStartCtxTime + ev.startSec, Math.max(ev.durationSec * 0.92, 0.05));
+    if (node) scheduledNodes.push(node);
+  }
+
+  // Bass/Begleitung: ein Akkord pro Takt (Bennys lockere Logik, siehe audioBass) —
+  // Start = erste Note dieses Takts, Dauer = bis zum Start des nächsten Takts mit Bass.
+  const measureStarts = [...new Set(lastTab.filter(e => !e.rest).map(e => e.measure))]
+    .sort((a, b) => a - b)
+    .map(m => ({ m, t: Math.min(...lastTab.filter(e => !e.rest && e.measure === m).map(e => e.startSec)) }));
+  for (let i = 0; i < measureStarts.length; i++) {
+    const { m, t } = measureStarts[i];
+    const root = lastAudioBass.get(m);
+    if (!root) continue;
+    const next = measureStarts[i + 1];
+    const dur = Math.max((next ? next.t : t + 2) - t, 0.3);
+    const nodes = playBassChord(audioCtx, root, playStartCtxTime + t, dur * 0.95);
+    scheduledNodes.push(...nodes);
+  }
+}
+
+function totalDurationSec() {
+  let max = 0;
+  for (const ev of lastTab) if (!ev.rest) max = Math.max(max, ev.startSec + ev.durationSec);
+  return max;
+}
+
+let lastScrollAt = 0;
+function updatePlayhead(sec) {
+  if (!notePositions.length) return;
+  // letzte Note finden, deren startSec <= sec ist (Balken hält bei Pausen die Position)
+  let cur = notePositions[0];
+  for (const np of notePositions) { if (np.startSec <= sec) cur = np; else break; }
+  const ph = $("playhead");
+  ph.style.left = cur.x + "px";
+  ph.style.top = (cur.yTop - 3 * (10 * osmd.zoom)) + "px";
+  ph.style.height = (12 * (10 * osmd.zoom)) + "px";   // grobe Pauschalhöhe über beide Systeme (Diskant+Bass) — Heuristik, wie die Akkord-Ausweich-Abstände an anderer Stelle
+  ph.classList.add("on");
+
+  // Auto-Scroll: nur antippen, wenn der Balken den "komfortablen" Sichtbereich verlässt,
+  // und mit Abklingzeit, damit es nicht bei jedem Frame erneut anstößt (würde gegen ein
+  // noch laufendes smooth-scroll ankämpfen und ruckeln).
+  const rect = ph.getBoundingClientRect();
+  const now = performance.now();
+  if (now - lastScrollAt > 500) {
+    const band = window.innerHeight;
+    if (rect.top < band * 0.15 || rect.top > band * 0.75) {
+      ph.scrollIntoView({ block: "center", behavior: "smooth" });
+      lastScrollAt = now;
+    }
+  }
+}
+
+function tick() {
+  if (!isPlaying) return;
+  const sec = audioCtx.currentTime - playStartCtxTime;
+  updatePlayhead(Math.max(sec, 0));
+  if (sec >= totalDurationSec() + 0.4) { stopPlayback(); return; }
+  rafId = requestAnimationFrame(tick);
+}
+
+function startPlayback() {
+  if (!currentXml || !lastTab.length) return;
+  scheduleAudio();
+  isPlaying = true;
+  $("btnPlay").classList.add("is-playing"); $("btnPlay").disabled = true; $("btnStop").disabled = false;
+  rafId = requestAnimationFrame(tick);
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  if (audioCtx) stopAllNodes(scheduledNodes, audioCtx);
+  scheduledNodes = [];
+  $("btnPlay").classList.remove("is-playing"); $("btnPlay").disabled = false; $("btnStop").disabled = true;
+  $("playhead").classList.remove("on");
+}
+
 function applySelection(div, i) {
   const sel = selections.get(i);
   div.classList.toggle("has-sel", sel != null);
@@ -469,7 +579,7 @@ function wireFileButton(btnId, inputId, onPick) {
 }
 
 wireFileButton("btnScore", "fileScore", async (f) => {
-  try { setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
+  try { stopPlayback(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 });
 $("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
@@ -494,6 +604,7 @@ $("flags").addEventListener("click", (e) => {
 
 /* ---------- Alles zurücksetzen (Wüste Gobi) ---------- */
 $("resetSel").addEventListener("click", () => {
+  stopPlayback();
   try { localStorage.removeItem(LS_KEY); } catch {}
   selections.clear(); currentXml = null;
   $("typeJeu").value = "3"; $("sensSol").value = "3"; $("sensFa").value = "3";
@@ -531,6 +642,8 @@ function openQR() {
   $("qrPop").classList.add("open");
 }
 $("btnQR").addEventListener("click", openQR);
+$("btnPlay").addEventListener("click", startPlayback);
+$("btnStop").addEventListener("click", stopPlayback);
 $("btnPrint").addEventListener("click", () => window.print());
 $("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
 $("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });

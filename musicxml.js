@@ -172,6 +172,22 @@ export function melodyWithChords(xmlString, options = {}) {
     for (const el of kids(measure, "note")) { const s = txt(kid(el, "staff")); if (s) allStaves.add(s); }
   const effectiveStaff = options.staff ?? (allStaves.size > 1 ? "1" : undefined);
 
+  // Sicherheits-Filter 2: mehrstimmiger Diskant auf DEMSELBEN System (z.B. Sopran +
+  // Alt in einer Partie notiert) automatisch auf die ERSTE auftretende Stimme
+  // beschränken. Ohne diesen Filter würden parallel klingende Stimmen fälschlich
+  // als zeitlich NACHEINANDER behandelt — eine gehaltene Note in Stimme 1 würde
+  // durch Stimme-2-Material hindurch "weiterlaufen" und dabei viel zu lang wirken
+  // (genau das Symptom: eine erste Note klingt unverhältnismäßig lange gehalten).
+  const allVoicesInStaff = new Set();
+  for (const measure of kids(part, "measure"))
+    for (const el of kids(measure, "note")) {
+      const s = txt(kid(el, "staff"));
+      if (effectiveStaff && s && s !== String(effectiveStaff)) continue;
+      const v = txt(kid(el, "voice"));
+      if (v) allVoicesInStaff.add(v);
+    }
+  const effectiveVoice = options.voice ?? (allVoicesInStaff.size > 1 ? [...allVoicesInStaff][0] : undefined);
+
   const hasAnyHarmony = !!findFirst(part, "harmony");
   const bassChordByMeasure = (!hasAnyHarmony && allStaves.size > 1) ? deriveBassChordsByMeasure(part, effectiveStaff) : null;
   const chordSource = hasAnyHarmony ? "harmony" : (bassChordByMeasure?.size ? "bass" : "none");
@@ -204,7 +220,7 @@ export function melodyWithChords(xmlString, options = {}) {
       if (el.tag !== "note") continue;
       const voice = txt(kid(el, "voice"));
       const staff = txt(kid(el, "staff"));
-      if (options.voice && voice && voice !== String(options.voice)) continue;
+      if (effectiveVoice && voice && voice !== String(effectiveVoice)) continue;
       if (effectiveStaff && staff && staff !== String(effectiveStaff)) continue;
       const isRest = !!kid(el, "rest");
       const inChord = !!kid(el, "chord");          // mit Vornote gestapelt (Mehrklang)

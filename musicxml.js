@@ -191,7 +191,12 @@ export function melodyWithChords(xmlString, options = {}) {
   const hasAnyHarmony = !!findFirst(part, "harmony");
   const bassChordByMeasure = (!hasAnyHarmony && allStaves.size > 1) ? deriveBassChordsByMeasure(part, effectiveStaff) : null;
   const chordSource = hasAnyHarmony ? "harmony" : (bassChordByMeasure?.size ? "bass" : "none");
-  const audioBass = (allStaves.size > 1) ? deriveAudioBassByMeasure(part, effectiveStaff) : new Map();   // unabhängig von chordSource/D.E.S. — eigener, lockerer Kanal fürs Hören; nur bei echten 2-System-Stücken
+  const audioBass = (hasAnyHarmony || allStaves.size > 1) ? deriveAudioBassByMeasure(part, effectiveStaff) : new Map();
+  // ^ echte <harmony>-Symbole sind immer sicher nutzbar (brauchen keine Systemtrennung) — auch bei einem
+  // einzigen System mit mehreren Stimmen (z.B. Musette-Sätze mit 3 Stimmen auf einem System).
+  // Der lockere "tiefster Ton"-Fallback bleibt weiterhin nur für echte 2-System-Stücke aktiv (sonst
+  // würde er bei einstimmigen Diato-Stücken ohne Harmonie versehentlich die Melodie als ihren eigenen
+  // Bass verdoppeln — genau der Fehler, den der ursprüngliche Schutz verhindern sollte).
 
   // Timing für die Wiedergabe: <divisions> (Ticks pro Viertel) und <sound tempo>
   // (Viertel pro Minute — laut MusicXML-Spec NORMIERT, unabhängig von der

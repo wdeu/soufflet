@@ -442,15 +442,23 @@ async function renderAll() {
   catch (e) { setStatus(L().st_render_err(e.message), true); console.error(e); }
 }
 
-function collectGraphicalNotes(staffIndex = 0) {
+function collectGraphicalNotes(staffIndex = 0, voiceFilter = null) {
   const out = [];
   const ml = osmd.graphic?.measureList || [];
   for (let m = 0; m < ml.length; m++) {
     const gm = ml[m]?.[staffIndex];
     if (!gm) continue;
     for (const se of gm.staffEntries)
-      for (const ve of se.graphicalVoiceEntries)
+      for (const ve of se.graphicalVoiceEntries) {
+        // Bei mehrstimmigen Systemen nur die gewählte Stimme zählen — sonst landen
+        // Noten aller Stimmen im selben Positions-Array wie die (auf eine Stimme
+        // gefilterten) Audio-/Tablatur-Daten, und Bild + Ton laufen aus dem Tritt.
+        if (voiceFilter != null) {
+          const vid = ve.parentVoiceEntry?.ParentVoice?.VoiceId;
+          if (vid != null && String(vid) !== String(voiceFilter)) continue;
+        }
         for (const gn of ve.notes) { const src = gn.sourceNote; if (src && !src.isRest()) out.push({ se, gm }); }
+      }
   }
   return out;
 }
@@ -464,7 +472,7 @@ function placeOverlay() {
   try { const res = transcribe(rhKb, lhKb, currentXml, options()); chordSource = res.chordSource; tab = res.tab.filter(e => !e.rest); lastAudioBass = res.audioBass; }
   catch (e) { setStatus(L().st_transcribe_err(e.message), true); return; }
   lastTab = tab;
-  const gnotes = collectGraphicalNotes(0);
+  const gnotes = collectGraphicalNotes(0, options().voice);
   const n = Math.min(gnotes.length, tab.length);
   notePositions = [];   // Quelle für Wiedergabe-Engine: x/y + Timing pro angezeigter Note, unabhängig von D.E.S.-Spielbarkeit
   let lastChordMeasureShown = null;   // Variante D: Hinweistext einmal pro Takt, nicht pro Note

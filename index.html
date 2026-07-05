@@ -72,6 +72,20 @@
   .mini-transport button.is-playing { background:#2ecc71; color:#fff; border-color:#2ecc71; }
   #qrPop { position:fixed; inset:0; background:rgba(28,26,23,.55); display:none; align-items:center; justify-content:center; z-index:50; }
   #qrPop.open { display:flex; }
+  #repPop { position:fixed; inset:0; background:rgba(28,26,23,.55); display:none; align-items:center; justify-content:center; z-index:50; }
+  #repPop.open { display:flex; }
+  #repPop .rep-card { background:#fff; border-radius:14px; padding:16px; width:min(480px, 92vw); max-height:80vh; display:flex; flex-direction:column; gap:10px; }
+  #repPop .rep-head { display:flex; align-items:center; justify-content:space-between; }
+  #repPop .rep-head button { border:none; background:none; font-size:16px; cursor:pointer; color:#6b6457; }
+  #repPop #repSearch { padding:7px 10px; border:1px solid #d8d2c6; border-radius:8px; font:14px -apple-system,sans-serif; }
+  #repPop #repList { overflow-y:auto; flex:1; }
+  #repPop .rep-g { font:700 11px/1 -apple-system,sans-serif; text-transform:uppercase; letter-spacing:.06em; color:#6b6457; padding:12px 0 5px; border-bottom:1px solid #eee7da; }
+  #repPop .rep-r { display:flex; align-items:baseline; gap:8px; padding:8px 2px; border-bottom:1px solid #f2ede3; cursor:pointer; }
+  #repPop .rep-r:hover b { color:var(--accent); }
+  #repPop .rep-m { flex:1; min-width:0; display:flex; flex-direction:column; }
+  #repPop .rep-m b { font-size:14px; }
+  #repPop .rep-m small { color:#6b6457; font-size:11.5px; }
+  #repPop .rep-t { color:#6b6457; font-size:11px; background:#f2ede3; padding:1px 8px; border-radius:999px; white-space:nowrap; }
   #qrPop .qr-card { background:#fff; border-radius:14px; padding:20px; text-align:center; max-width:260px; }
   #qrPop canvas { display:block; margin:0 auto 10px; }
   #qrPop button { margin-top:8px; font:inherit; padding:6px 14px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
@@ -140,6 +154,7 @@
   <button id="btnShare">🔗 <span id="lblShare"></span></button>
   <button id="btnQR">▦ <span id="lblQR"></span></button>
   <button id="btnPrint">🖨 <span id="lblPrint"></span></button>
+  <button id="btnRep">📚 <span id="lblRep"></span></button>
   <a href="https://wdeu.github.io/benny-accordion/" id="bennyLink" style="font-size:12px;color:var(--accent);text-decoration:none;margin-left:auto;display:flex;align-items:center;gap:5px;">🪗 <span id="lblBenny"></span> →</a>
 </div>
 
@@ -148,6 +163,14 @@
     <div id="qrDiv" style="display:inline-block"></div>
     <div id="qrUrl" style="font-size:12px;color:#6b6457;word-break:break-all;"></div>
     <button id="qrClose">✕</button>
+  </div>
+</div>
+
+<div id="repPop">
+  <div class="rep-card">
+    <div class="rep-head"><b id="repTitle"></b><button id="repClose">✕</button></div>
+    <input type="search" id="repSearch">
+    <div id="repList"></div>
   </div>
 </div>
 
@@ -172,6 +195,8 @@ const STR = {
   de: {
     lbl_panel:"Einstellungen", panel_open:"ausblenden", panel_closed:n=>n?"Layout & Partitur ✓":"einblenden",
     lbl_share:"Teilen", lbl_qr:"QR-Code", lbl_benny:"Zu Benny", lbl_impressum:"Impressum",
+    lbl_rep:"Repertoire", rep_search:"Suchen …", rep_empty:"Nichts gefunden.",
+    rep_err:"Repertoire nicht erreichbar", rep_groups:{kannIch:"Kann ich",inArbeit:"In Arbeit",neu:"Neu"},
     share_title:"Soufflet — D.E.S.-Tablatur fürs Diato",
     tagline: "MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Sprache", lbl_score:"Partitur (.mxl / .musicxml / .xml)", lbl_rh:"Rechte Hand (Layout)", lbl_lh:"Linke Hand / Bass (Layout)",
@@ -201,6 +226,8 @@ const STR = {
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
     lbl_share:"Partager", lbl_qr:"Code QR", lbl_benny:"Vers Benny", lbl_impressum:"Mentions légales",
+    lbl_rep:"Répertoire", rep_search:"Rechercher …", rep_empty:"Rien trouvé.",
+    rep_err:"Répertoire indisponible", rep_groups:{kannIch:"Je sais jouer",inArbeit:"En cours",neu:"Nouveau"},
     share_title:"Soufflet — tablature D.E.S. pour accordéon diatonique",
     tagline: "MusicXML / .mxl en entrée → tablature à boutons au-dessus des notes. Tout reste local dans le navigateur. Touche une variante pour la choisir. · Continuation libre de DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Langue", lbl_score:"Partition (.mxl / .musicxml / .xml)", lbl_rh:"Main droite (plan)", lbl_lh:"Main gauche / basses (plan)",
@@ -230,6 +257,8 @@ const STR = {
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
     lbl_share:"Share", lbl_qr:"QR code", lbl_benny:"To Benny", lbl_impressum:"Legal notice",
+    lbl_rep:"Repertoire", rep_search:"Search …", rep_empty:"Nothing found.",
+    rep_err:"Repertoire unavailable", rep_groups:{kannIch:"Can play",inArbeit:"In progress",neu:"New"},
     share_title:"Soufflet — D.E.S. tablature for diatonic accordion",
     tagline: "MusicXML / .mxl in → button tablature above the notes. Everything stays local in the browser. Tap a variant to choose it. · Open continuation of DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Language", lbl_score:"Score (.mxl / .musicxml / .xml)", lbl_rh:"Right hand (layout)", lbl_lh:"Left hand / bass (layout)",
@@ -259,6 +288,8 @@ const STR = {
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
     lbl_share:"Condividi", lbl_qr:"Codice QR", lbl_benny:"Vai a Benny", lbl_impressum:"Note legali",
+    lbl_rep:"Repertorio", rep_search:"Cerca …", rep_empty:"Niente trovato.",
+    rep_err:"Repertorio non disponibile", rep_groups:{kannIch:"So suonare",inArbeit:"In corso",neu:"Nuovo"},
     share_title:"Soufflet — intavolatura D.E.S. per fisarmonica diatonica",
     tagline: "MusicXML / .mxl in entrata → intavolatura a bottoni sopra le note. Tutto resta locale nel browser. Tocca una variante per sceglierla. · Continuazione libera di DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Lingua", lbl_score:"Partitura (.mxl / .musicxml / .xml)", lbl_rh:"Mano destra (schema)", lbl_lh:"Mano sinistra / bassi (schema)",
@@ -294,6 +325,8 @@ const $ = id => document.getElementById(id);
 const statusEl = $("status"), overlay = $("overlay");
 const setStatus = (m, warn=false) => { statusEl.innerHTML = m; statusEl.classList.toggle("warn", warn); };
 
+let repPieces = null, repBase = null;   // Repertoire-Zustand — vor applyI18n deklariert (wird dort gelesen)
+
 function applyI18n() {
   $("verSpan").textContent = "v" + APP_VERSION;
   const T = L();
@@ -314,6 +347,9 @@ function applyI18n() {
   $("lblPlay2").textContent = T.lbl_play2; $("lblStop").textContent = T.lbl_stop;
   setTransportUI();
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
+  $("lblRep").textContent = T.lbl_rep; $("repTitle").textContent = "📚 " + T.lbl_rep;
+  $("repSearch").placeholder = T.rep_search;
+  if (repPieces) repRender();
   updatePanelChip();
 }
 
@@ -337,7 +373,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
-const APP_VERSION = "1.1.0";   // bei jedem Deploy hier bumpen — einzige Stelle
+const APP_VERSION = "1.2.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map(), lastTempo = 120;
@@ -832,6 +868,76 @@ $("miniStop").addEventListener("click", stopTransport);
 $("btnPrint").addEventListener("click", () => window.print());
 $("qrClose").addEventListener("click", () => $("qrPop").classList.remove("open"));
 $("qrPop").addEventListener("click", (e) => { if (e.target.id === "qrPop") $("qrPop").classList.remove("open"); });
+
+/* ---------- Repertoire: index.json aus der Benny-Analyse-Pipeline ---------- */
+// Quellen der Reihe nach: lokaler Server über ~/Projects, Geschwister-Pfad auf
+// derselben Domain, zuletzt GitHub Pages (sendet CORS *, geht also von überall).
+const REP_SOURCES = [
+  "../repertoire/",
+  "../benny-accordion/repertoire/",
+  "https://wdeu.github.io/benny-accordion/repertoire/",
+];
+const repEsc = x => String(x).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+
+async function repLoad() {
+  for (const base of REP_SOURCES) {
+    try {
+      const r = await fetch(base + "index.json", { cache: "no-cache" });
+      if (!r.ok) continue;
+      repPieces = (await r.json()).pieces || []; repBase = base;
+      return true;
+    } catch (e) {}
+  }
+  return false;
+}
+// Übestatus kommt aus Bennys localStorage — auf gleicher Origin (wdeu.github.io,
+// lokaler Server) geteilt; sonst Fallback auf den index.json-Startwert.
+function repStatusOf(p) {
+  try { return (JSON.parse(localStorage.getItem("benny.uebestatus")) || {})[p.id] || p.uebestatus || "neu"; }
+  catch (e) { return p.uebestatus || "neu"; }
+}
+function repRender() {
+  const T = L(), q = $("repSearch").value.trim().toLowerCase();
+  const rows = repPieces.filter(p => !q || (p.title + " " + (p.artist || "")).toLowerCase().includes(q));
+  const groups = { kannIch: [], inArbeit: [], neu: [] };
+  rows.forEach(p => (groups[repStatusOf(p)] || groups.neu).push(p));
+  let html = "";
+  for (const g of ["kannIch", "inArbeit", "neu"]) {
+    if (!groups[g].length) continue;
+    groups[g].sort((a, b) => (a.difficultyScore ?? 99) - (b.difficultyScore ?? 99) || a.title.localeCompare(b.title));
+    html += `<div class="rep-g">${T.rep_groups[g]} · ${groups[g].length}</div>`;
+    html += groups[g].map(p => {
+      const info = [p.artist && p.artist !== "?" ? p.artist : null, p.key !== "?" ? p.key : null,
+                    p.bpm ? p.bpm + " bpm" : null].filter(Boolean).join(" · ");
+      return `<div class="rep-r" data-id="${repEsc(p.id)}"><span>${p.fit || ""}</span>` +
+        `<span class="rep-m"><b>${repEsc(p.title)}</b><small>${repEsc(info)}</small></span>` +
+        (p.type && p.type !== "?" ? `<span class="rep-t">${repEsc(p.type)}</span>` : "") + `</div>`;
+    }).join("");
+  }
+  $("repList").innerHTML = html || `<div class="rep-r"><small>${L().rep_empty}</small></div>`;
+}
+$("btnRep").addEventListener("click", async () => {
+  if (repPieces === null && !(await repLoad())) { repPieces = null; setStatus(L().rep_err, true); return; }
+  $("repPop").classList.add("open");
+  repRender();
+  setTimeout(() => $("repSearch").focus(), 50);
+});
+$("repList").addEventListener("click", async (e) => {
+  const row = e.target.closest(".rep-r"); if (!row || !row.dataset.id) return;
+  const p = repPieces.find(x => x.id === row.dataset.id); if (!p) return;
+  $("repPop").classList.remove("open");
+  try {
+    setStatus(L().st_loading(p.title));
+    const r = await fetch(repBase + p.file); if (!r.ok) throw new Error("HTTP " + r.status);
+    const name = p.file.split("/").pop();
+    const b = $("btnScore"); b.textContent = name; b.title = name; b.classList.add("has-file");
+    await loadScore(new File([await r.arrayBuffer()], name));
+  } catch (err) { setStatus(L().st_score_err(err.message), true); }
+});
+$("repSearch").addEventListener("input", repRender);
+$("repClose").addEventListener("click", () => $("repPop").classList.remove("open"));
+$("repPop").addEventListener("click", (e) => { if (e.target.id === "repPop") $("repPop").classList.remove("open"); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("repPop").classList.remove("open"); });
 
 let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(renderAll, 150); });
 </script>

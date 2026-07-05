@@ -405,8 +405,22 @@ function populateVoiceSelector(voices) {
     setStatus(L().st_bundle_err(e.message), true);
   }
 
+  // ?score=<URL>: Stück direkt laden (Handoff aus Benny-Repertoire) — gewinnt über den gespeicherten Zustand
+  let urlScoreLoaded = false;
+  const scoreUrl = new URLSearchParams(location.search).get("score");
+  if (scoreUrl) {
+    try {
+      const r = await fetch(scoreUrl);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const name = decodeURIComponent(scoreUrl.split("/").pop().split("?")[0]) || "score.mxl";
+      const b = $("btnScore"); b.textContent = name; b.title = name; b.classList.add("has-file");
+      await loadScore(new File([await r.arrayBuffer()], name));
+      urlScoreLoaded = true;
+    } catch (e) { setStatus(L().st_score_err(e.message), true); }
+  }
+
   // gespeicherte Partitur wiederherstellen (Selektionen sind schon gesetzt -> Overlay übernimmt sie)
-  if (saved?.xml) {
+  if (!urlScoreLoaded && saved?.xml) {
     try {
       currentXml = saved.xml; ensureOsmd(); await osmd.load(currentXml);
       if (saved.scoreName) { const b = $("btnScore"); b.textContent = saved.scoreName; b.title = saved.scoreName; b.classList.add("has-file"); }
@@ -561,6 +575,7 @@ function placeOverlay() {
     }
   }
   const warn = rhKb.warnings?.length ? `<span class="warn">${L().st_warn(rhKb.warnings.length)}</span>` : "";
+  const n = tab.length;
   const noChordRatio = n ? tab.slice(0, n).filter(e => !e.chord).length / n : 0;
   let chordHint = "";
   if (chordSource === "bass") chordHint = ` · <span class="hint">${L().st_bassderived()}</span>`;
@@ -744,10 +759,11 @@ function wireFileButton(btnId, inputId, onPick) {
   });
 }
 
-wireFileButton("btnScore", "fileScore", async (f) => {
+async function loadScore(f) {
   try { stopTransport(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); try { populateVoiceSelector(transcribe(rhKb, lhKb, currentXml, options()).voicesInStaff); } catch {} await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
-});
+}
+wireFileButton("btnScore", "fileScore", loadScore);
 $("voiceSel").addEventListener("change", () => { selections.clear(); placeOverlay(); saveState(); });
 $("rhSel").addEventListener("change", (e) => { if (bundle) { rhKb = getRH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });
 $("lhSel").addEventListener("change", (e) => { if (bundle) { lhKb = getLH(bundle, e.target.value); selections.clear(); placeOverlay(); saveState(); } });

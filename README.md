@@ -38,6 +38,13 @@ Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://j
 - Fest im Bild verankerte Mini-Transportleiste, erreichbar auch wenn die Hauptbuttons durch Auto-Scroll außer Sicht sind.
 - Tempo ausschließlich aus dem maschinenlesbaren `<sound tempo>`-Wert (nie aus der optischen Metronomangabe — bei punktierten Vierteln in 6/8 wäre das sonst falsch).
 
+**📚 Repertoire**
+- Toolbar-Button öffnet die analysierten Stücke aus dem [Benny-Accordion-Repertoire-System](https://github.com/wdeu/benny-accordion/tree/main/tools) (Balg-Belastung, Schwierigkeit, Metadaten) — gruppiert nach Übestatus, sortiert nach Schwierigkeit, mit Suche.
+- Übestatus wird über `localStorage` mit Benny Accordion geteilt (gleiche Origin).
+- Klick auf ein Stück lädt es direkt in die D.E.S.-Ansicht; alternativ öffnet Benny einzelne Stücke per `?score=<URL>`-Deeplink.
+- Quelle wird der Reihe nach versucht: lokaler Server → Geschwister-Projekt → `wdeu.github.io/benny-accordion` (CORS-offen) — funktioniert also auch dann, wenn Soufflet auf `soufflet.wdeu.de` läuft und Benny nur auf GitHub Pages steht.
+- Ohne erreichbare Quelle bleibt der Rest der App unverändert nutzbar.
+
 **Bedienung & Teilen**
 - Einklappbares Einstellungs-Panel (mehr Platz für die Noten auf dem iPhone).
 - Vollständige Persistenz: Layout, Optionen, Zoom, geladene Partitur und getroffene Auswahl überleben einen Browser-Neustart.
@@ -72,29 +79,32 @@ audio.js                  — Akkordeon-Synthesizer (aus Benny Accordion portier
 keyboards.json            — gebündelte 26 Layouts (RH+LH)
 package.json
 impressum.html
+hilfe.html                — Kurzanleitung (siehe Menüpunkt „?")
 site.webmanifest, *.png   — Favicon/Homescreen-Icons, og-image.png (Sharing-Vorschau)
+.ionos-overrides/         — Dateien, die NUR auf soufflet.wdeu.de anders sein sollen
+                            (z. B. weiß gerahmte Homescreen-Icons zur Unterscheidung
+                            vom GitHub-Pages-Zwilling); ionos-sync.sh legt sie nach
+                            dem Haupt-Sync drüber, Pull nimmt sie aus.
 keyboards/                — Quell-Layouts (.keyboard), nur fürs Bauen relevant
 tools/                    — build-keyboards.mjs, validate-keyboards.mjs
-raycast/                  — Deploy-Skripte (siehe unten)
 ```
 
 ## Live & Deploy
 
 - **GitHub Pages** (Haupt-Adresse): https://wdeu.github.io/soufflet/ — automatisch aktiv bei jedem Push auf `main`.
-- **IONOS-Spiegel** (`soufflet.wdeu.de`): geplant, noch nicht eingerichtet.
+- **IONOS-Spiegel**: https://soufflet.wdeu.de — läuft, wird bei jedem Deploy mitgesynct (`DEPLOY_IONOS=1`).
 
 ### Deploy per Raycast (am Mac mini)
 ```
-Soufflet · Deploy   (Raycast-Skript, raycast/soufflet-deploy.sh)
+Soufflet · Deploy   (Raycast-Skript, ~/Projects/raycast-scripts/soufflet-deploy.sh)
 ```
-Baut `keyboards.json` neu, committet, pusht. Optionaler IONOS-Sync über `DEPLOY_IONOS=1` im Skript.
+Baut `keyboards.json` neu, committet, pusht, synct danach per `ionos-sync.sh` nach IONOS (inkl. `.ionos-overrides/`).
 
 ### Deploy per Termius (vom iPhone, ohne Mac-Bildschirm)
 SFTP-Upload der geänderten Datei(en) nach `~/Projects/soufflet/`, danach per SSH:
 ```
-cd ~/Projects/soufflet && bash raycast/soufflet-deploy.sh "Commit-Nachricht"
+cd ~/Projects/soufflet && bash ~/Projects/raycast-scripts/soufflet-deploy.sh "Commit-Nachricht"
 ```
-Details: siehe `Termius.md`.
 
 ### Build-Werkzeuge
 ```

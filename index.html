@@ -92,8 +92,14 @@
   footer.legal { padding:10px 18px 70px; font-size:11px; color:#9a9384; }
   footer.legal a { color:#9a9384; }
 
+  .sister-btn { position:fixed; left:14px; bottom:40px; z-index:40; height:34px; padding:0 14px;
+    border:1px solid var(--line); border-radius:20px; background:#fff;
+    box-shadow:0 2px 10px rgba(0,0,0,.18); cursor:pointer; font:inherit; font-size:13px;
+    display:flex; align-items:center; gap:6px; color:var(--ink); }
+  .sister-btn:hover { color:var(--accent); border-color:var(--accent); }
+
   @media print {
-    header, .panel-toggle, .controls, .share-row, #qrPop, footer.legal { display:none !important; }
+    header, .panel-toggle, .controls, .share-row, #qrPop, .sister-btn, footer.legal { display:none !important; }
     #status { position:static; border-top:none; padding:6px 0 0; }
     #stage { padding:0; }
     body { background:#fff; }
@@ -180,6 +186,7 @@
   <button id="miniPlay" aria-label="Play/Pause"><span id="miniPlayIcon">▶</span></button>
   <button id="miniStop" aria-label="Stop">■</button>
 </div>
+<button class="sister-btn" id="sisterBtn" title="Gleiches Stück in Benny (Play-Along)">⇄ 🪗 <span id="lblSister"></span></button>
 <div id="status"></div>
 <footer class="legal"><a href="hilfe.html">Hilfe</a> · <a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
 
@@ -197,6 +204,7 @@ const STR = {
     lbl_share:"Teilen", lbl_qr:"QR-Code", lbl_benny:"Zu Benny", lbl_impressum:"Impressum",
     lbl_rep:"Repertoire", rep_search:"Suchen …", rep_empty:"Nichts gefunden.",
     rep_err:"Repertoire nicht erreichbar", rep_groups:{kannIch:"Kann ich",inArbeit:"In Arbeit",neu:"Neu"},
+    st_piece_missing:"Stück nicht im Repertoire", st_not_in_rep:"Stück nicht im Repertoire — nicht übergeben",
     share_title:"Soufflet — D.E.S.-Tablatur fürs Diato",
     tagline: "MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Sprache", lbl_score:"Partitur (.mxl / .musicxml / .xml)", lbl_rh:"Rechte Hand (Layout)", lbl_lh:"Linke Hand / Bass (Layout)",
@@ -228,6 +236,7 @@ const STR = {
     lbl_share:"Partager", lbl_qr:"Code QR", lbl_benny:"Vers Benny", lbl_impressum:"Mentions légales",
     lbl_rep:"Répertoire", rep_search:"Rechercher …", rep_empty:"Rien trouvé.",
     rep_err:"Répertoire indisponible", rep_groups:{kannIch:"Je sais jouer",inArbeit:"En cours",neu:"Nouveau"},
+    st_piece_missing:"Morceau introuvable dans le répertoire", st_not_in_rep:"Morceau hors répertoire — non transmis",
     share_title:"Soufflet — tablature D.E.S. pour accordéon diatonique",
     tagline: "MusicXML / .mxl en entrée → tablature à boutons au-dessus des notes. Tout reste local dans le navigateur. Touche une variante pour la choisir. · Continuation libre de DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Langue", lbl_score:"Partition (.mxl / .musicxml / .xml)", lbl_rh:"Main droite (plan)", lbl_lh:"Main gauche / basses (plan)",
@@ -259,6 +268,7 @@ const STR = {
     lbl_share:"Share", lbl_qr:"QR code", lbl_benny:"To Benny", lbl_impressum:"Legal notice",
     lbl_rep:"Repertoire", rep_search:"Search …", rep_empty:"Nothing found.",
     rep_err:"Repertoire unavailable", rep_groups:{kannIch:"Can play",inArbeit:"In progress",neu:"New"},
+    st_piece_missing:"Piece not in repertoire", st_not_in_rep:"Piece not in repertoire — not handed over",
     share_title:"Soufflet — D.E.S. tablature for diatonic accordion",
     tagline: "MusicXML / .mxl in → button tablature above the notes. Everything stays local in the browser. Tap a variant to choose it. · Open continuation of DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Language", lbl_score:"Score (.mxl / .musicxml / .xml)", lbl_rh:"Right hand (layout)", lbl_lh:"Left hand / bass (layout)",
@@ -290,6 +300,7 @@ const STR = {
     lbl_share:"Condividi", lbl_qr:"Codice QR", lbl_benny:"Vai a Benny", lbl_impressum:"Note legali",
     lbl_rep:"Repertorio", rep_search:"Cerca …", rep_empty:"Niente trovato.",
     rep_err:"Repertorio non disponibile", rep_groups:{kannIch:"So suonare",inArbeit:"In corso",neu:"Nuovo"},
+    st_piece_missing:"Brano non nel repertorio", st_not_in_rep:"Brano non nel repertorio — non trasferito",
     share_title:"Soufflet — intavolatura D.E.S. per fisarmonica diatonica",
     tagline: "MusicXML / .mxl in entrata → intavolatura a bottoni sopra le note. Tutto resta locale nel browser. Tocca una variante per sceglierla. · Continuazione libera di DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Lingua", lbl_score:"Partitura (.mxl / .musicxml / .xml)", lbl_rh:"Mano destra (schema)", lbl_lh:"Mano sinistra / bassi (schema)",
@@ -326,6 +337,8 @@ const statusEl = $("status"), overlay = $("overlay");
 const setStatus = (m, warn=false) => { statusEl.innerHTML = m; statusEl.classList.toggle("warn", warn); };
 
 let repPieces = null, repBase = null;   // Repertoire-Zustand — vor applyI18n deklariert (wird dort gelesen)
+let currentPieceId = null;              // aktuell geladenes Repertoire-Stück (null = fremde Datei/leer)
+const SISTER_SELF = "soufflet";
 
 function applyI18n() {
   $("verSpan").textContent = "v" + APP_VERSION;
@@ -348,6 +361,7 @@ function applyI18n() {
   setTransportUI();
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
   $("lblRep").textContent = T.lbl_rep; $("repTitle").textContent = "📚 " + T.lbl_rep;
+  $("lblSister").textContent = T.lbl_benny;
   $("repSearch").placeholder = T.rep_search;
   if (repPieces) repRender();
   updatePanelChip();
@@ -373,7 +387,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
-const APP_VERSION = "1.2.0";   // bei jedem Deploy hier bumpen — einzige Stelle
+const APP_VERSION = "1.3.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map(), lastTempo = 120;
@@ -454,6 +468,12 @@ function populateVoiceSelector(voices) {
       urlScoreLoaded = true;
     } catch (e) { setStatus(L().st_score_err(e.message), true); }
   }
+
+  // ?piece=<id>: Handoff aus Benny (Repertoire-Identität statt URL). Vorrang:
+  // ?score= (Kompat) > ?piece= > gespeicherter Zustand. TDZ-sicher: durch die
+  // awaits oben ist das Modul zu diesem Zeitpunkt vollständig evaluiert.
+  const pieceId = new URLSearchParams(location.search).get("piece");
+  if (!urlScoreLoaded && pieceId) urlScoreLoaded = await loadPieceById(pieceId);
 
   // gespeicherte Partitur wiederherstellen (Selektionen sind schon gesetzt -> Overlay übernimmt sie)
   if (!urlScoreLoaded && saved?.xml) {
@@ -796,6 +816,7 @@ function wireFileButton(btnId, inputId, onPick) {
 }
 
 async function loadScore(f) {
+  currentPieceId = null;   // Datei-Picker/?score= haben keine Repertoire-Identität; loadPieceById setzt sie danach neu
   try { stopTransport(); setStatus(L().st_loading(f.name)); currentXml = await readScoreFile(f); selections.clear(); ensureOsmd(); await osmd.load(currentXml); try { populateVoiceSelector(transcribe(rhKb, lhKb, currentXml, options()).voicesInStaff); } catch {} await renderAll(); saveState(); collapsePanel(); }
   catch (err) { setStatus(L().st_score_err(err.message), true); console.error(err); }
 }
@@ -879,6 +900,36 @@ const REP_SOURCES = [
 ];
 const repEsc = x => String(x).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 
+// Schwester-URL: Host-Map für die IONOS-Subdomains, sonst relativer
+// Geschwister-Pfad — deckt GitHub Pages UND lokalen Server ab (Zwei-Host-Regel).
+function sisterBase() {
+  const h = location.hostname;
+  if (h === "soufflet.wdeu.de") return "https://benny.wdeu.de/";
+  if (h === "benny.wdeu.de") return "https://soufflet.wdeu.de/";
+  return new URL("../benny-accordion/", location.href).href;
+}
+
+function broadcastNowPlaying(id) {
+  try { localStorage.setItem("diato.nowPlaying", JSON.stringify({ id, from: SISTER_SELF, ts: Date.now() })); } catch (e) {}
+}
+
+// Stück per Repertoire-id laden — genutzt vom Picker, ?piece=-Deeplink und Live-Folgen.
+async function loadPieceById(id, { broadcast = true } = {}) {
+  if (repPieces === null && !(await repLoad())) { setStatus(L().rep_err, true); return false; }
+  const p = repPieces.find(x => x.id === id);
+  if (!p) { setStatus(L().st_piece_missing, true); return false; }
+  try {
+    setStatus(L().st_loading(p.title));
+    const r = await fetch(repBase + p.file); if (!r.ok) throw new Error("HTTP " + r.status);
+    const name = p.file.split("/").pop();
+    const b = $("btnScore"); b.textContent = name; b.title = name; b.classList.add("has-file");
+    await loadScore(new File([await r.arrayBuffer()], name));
+    currentPieceId = p.id;                 // nach loadScore (das nullt es)
+    if (broadcast) broadcastNowPlaying(p.id);
+    return true;
+  } catch (err) { setStatus(L().st_score_err(err.message), true); return false; }
+}
+
 async function repLoad() {
   for (const base of REP_SOURCES) {
     try {
@@ -924,20 +975,39 @@ $("btnRep").addEventListener("click", async () => {
 });
 $("repList").addEventListener("click", async (e) => {
   const row = e.target.closest(".rep-r"); if (!row || !row.dataset.id) return;
-  const p = repPieces.find(x => x.id === row.dataset.id); if (!p) return;
   $("repPop").classList.remove("open");
-  try {
-    setStatus(L().st_loading(p.title));
-    const r = await fetch(repBase + p.file); if (!r.ok) throw new Error("HTTP " + r.status);
-    const name = p.file.split("/").pop();
-    const b = $("btnScore"); b.textContent = name; b.title = name; b.classList.add("has-file");
-    await loadScore(new File([await r.arrayBuffer()], name));
-  } catch (err) { setStatus(L().st_score_err(err.message), true); }
+  await loadPieceById(row.dataset.id);
 });
 $("repSearch").addEventListener("input", repRender);
 $("repClose").addEventListener("click", () => $("repPop").classList.remove("open"));
 $("repPop").addEventListener("click", (e) => { if (e.target.id === "repPop") $("repPop").classList.remove("open"); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("repPop").classList.remove("open"); });
+
+/* ---------- Schwester-App: Toggle zu Benny + Live-Folgen ---------- */
+window.name = "diato.soufflet";   // Toggle der Schwester findet/fokussiert diesen Tab
+
+function gotoSister() {
+  if (currentXml && !currentPieceId) setStatus(L().st_not_in_rep);
+  const url = sisterBase() + (currentPieceId ? "?piece=" + encodeURIComponent(currentPieceId) : "");
+  const w = window.open(url, "diato.benny");
+  if (w) w.focus();
+}
+$("sisterBtn").addEventListener("click", gotoSister);
+// bennyLink: Host-Fix (war auf wdeu.github.io hartkodiert — falsche Schwester auf
+// soufflet.wdeu.de) und Umwidmung auf denselben Codepfad wie der Toggle.
+$("bennyLink").href = sisterBase();
+$("bennyLink").addEventListener("click", (e) => { e.preventDefault(); gotoSister(); });
+
+// Live-Folgen: lädt die Schwester (gleiche Origin, anderer Tab) ein Repertoire-
+// Stück, ziehen wir ohne Reload nach. from===SELF und id===currentPieceId
+// verhindern Ping-Pong; der Auto-Load rebroadcastet nicht.
+window.addEventListener("storage", (e) => {
+  if (e.key !== "diato.nowPlaying" || !e.newValue) return;
+  let m; try { m = JSON.parse(e.newValue); } catch (err) { return; }
+  if (!m.id || m.from === SISTER_SELF || m.id === currentPieceId) return;
+  currentPieceId = m.id;
+  loadPieceById(m.id, { broadcast: false });
+});
 
 let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(renderAll, 150); });
 </script>

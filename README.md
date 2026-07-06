@@ -44,6 +44,7 @@ Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://j
 - Klick auf ein Stück lädt es direkt in die D.E.S.-Ansicht; alternativ öffnet Benny einzelne Stücke per `?score=<URL>`-Deeplink.
 - Quelle wird der Reihe nach versucht: lokaler Server → Geschwister-Projekt → `wdeu.github.io/benny-accordion` (CORS-offen) — funktioniert also auch dann, wenn Soufflet auf `soufflet.wdeu.de` läuft und Benny nur auf GitHub Pages steht.
 - Ohne erreichbare Quelle bleibt der Rest der App unverändert nutzbar.
+- **⇄-Toggle (unten links) + Live-Folgen**: wechselt zu Benny mit demselben Repertoire-Stück (`?piece=<id>`-Deeplink, beide Richtungen); sind beide Apps auf derselben Origin offen, zieht die Schwester beim Stück-Laden automatisch nach (localStorage-Event `diato.nowPlaying`).
 
 **Bedienung & Teilen**
 - Einklappbares Einstellungs-Panel (mehr Platz für die Noten auf dem iPhone).

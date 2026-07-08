@@ -48,8 +48,9 @@
   .ctl { display:flex; flex-direction:column; gap:3px; }
   .ctl label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#7a7264; }
   .ctl select { font:inherit; height:32px; padding:0 8px; border:1px solid var(--line); border-radius:6px; background:#fff; max-width:250px; }
-  .filebtn, #resetSel { font:inherit; height:32px; line-height:30px; padding:0 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
-  .ctl select:hover, .filebtn:hover, #resetSel:hover { border-color:var(--accent); }
+  .filebtn, #resetSel, #btnShare, #btnQR, #btnPrint { font:inherit; height:32px; line-height:30px; padding:0 10px; border:1px solid var(--line); border-radius:6px; background:#fff; cursor:pointer; }
+  .ctl select:hover, .filebtn:hover, #resetSel:hover, #btnShare:hover, #btnQR:hover, #btnPrint:hover { border-color:var(--accent); }
+  #btnShare, #btnQR, #btnPrint { display:inline-flex; align-items:center; gap:6px; line-height:normal; }
   .filebtn { display:inline-block; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
   .filebtn.has-file { color:#000; font-weight:500; }
   .ctl.row { flex-direction:row; align-items:center; height:32px; gap:6px; }
@@ -153,19 +154,19 @@
   <div class="ctl"><label id="lblSol"></label><select id="sensSol"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
   <div class="ctl"><label id="lblFa"></label><select id="sensFa"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
   <div class="ctl row"><input type="checkbox" id="onePoss" /><label for="onePoss" id="lblOne" style="text-transform:none"></label></div>
+  <div class="ctl"><label>&nbsp;</label><button id="btnShare">🔗 <span id="lblShare"></span></button></div>
+  <div class="ctl"><label>&nbsp;</label><button id="btnQR">▦ <span id="lblQR"></span></button></div>
+  <div class="ctl"><label>&nbsp;</label><button id="btnPrint">🖨 <span id="lblPrint"></span></button></div>
   <div class="ctl"><label>&nbsp;</label><button id="resetSel"></button></div>
 </div>
 
 <div class="share-row">
   <button id="btnPlay"><span id="playIcon">▶</span> <span id="lblPlay2"></span></button>
   <button id="btnStop" disabled>■ <span id="lblStop"></span></button>
+  <button id="btnRep">📚 <span id="lblRep"></span></button>
   <span id="timeReadout" style="font:12px/1 -apple-system,sans-serif; color:#6b6457; min-width:74px;"></span>
   <div class="ctl-slider" title="Zoom"><label id="lblZoom"></label><input type="range" id="zoom" min="0.6" max="1.3" step="0.05" value="0.9"><span class="ctl-val" id="zoomVal">90%</span></div>
   <div class="ctl-slider" title="Tempo"><label id="lblTempo"></label><input type="range" id="tempoRate" min="0.5" max="1.15" step="0.05" value="1"><span class="ctl-val" id="tempoVal">100%</span></div>
-  <button id="btnShare">🔗 <span id="lblShare"></span></button>
-  <button id="btnQR">▦ <span id="lblQR"></span></button>
-  <button id="btnPrint">🖨 <span id="lblPrint"></span></button>
-  <button id="btnRep">📚 <span id="lblRep"></span></button>
   <a href="https://wdeu.github.io/benny-accordion/" id="bennyLink" style="font-size:12px;color:var(--accent);text-decoration:none;margin-left:auto;display:flex;align-items:center;gap:5px;">🪗 <span id="lblBenny"></span> →</a>
 </div>
 
@@ -392,7 +393,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
-const APP_VERSION = "1.4.0";   // bei jedem Deploy hier bumpen — einzige Stelle
+const APP_VERSION = "1.4.1";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map(), lastTempo = 120;

@@ -6,6 +6,9 @@
 
 Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://jmi.ovh/DiatonicTab) DiatonicTab-Plugins für MuseScore — als eigenständige Web-App, ohne Installation, ohne MuseScore, auf jedem Gerät mit Browser.
 
+![Soufflet und Benny Accordion nebeneinander, synchronisiert auf dasselbe Repertoire-Stück](screenshots/sync-benny-soufflet.png)
+*Soufflet (rechts) und [Benny Accordion](https://wdeu.github.io/benny-accordion/) (links) im Split-Screen: derselbe Repertoire-Titel lädt in beiden Apps automatisch nach — der ⇄-Toggle und das Live-Folgen (siehe unten) machen die Knopf-Tablatur und den Play-Along zu zwei synchronen Ansichten desselben Stücks.*
+
 ---
 
 ## 🇩🇪 Was Soufflet macht

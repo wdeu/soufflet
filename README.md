@@ -131,4 +131,4 @@ Aktuell via jsDelivr-CDN: OpenSheetMusicDisplay, fflate, QRCode.js. Geplant: lok
 
 GPL-2.0 — siehe `LICENSE`. Fortschreibung der DiatonicTab-Plugins von Jean-Michel Bencetti ([jmi.ovh/DiatonicTab](https://jmi.ovh/DiatonicTab)), mit seiner ausdrücklichen Ermutigung, die Logik zu studieren und sich anzueignen. Akkordeon-Klangsynthese 1:1 aus [Benny Accordion](https://wdeu.github.io/benny-accordion/) portiert (eigenes Projekt, eigene Spektralanalyse des realen Instruments).
 
-Werner Deuer (wdeu) · Bad Emstal
+Werner Deuermeier (wdeu) · Bad Emstal

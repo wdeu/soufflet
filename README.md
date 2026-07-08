@@ -47,7 +47,7 @@ Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://j
 - **⇄-Toggle (unten links) + Live-Folgen**: wechselt zu Benny mit demselben Repertoire-Stück (`?piece=<id>`-Deeplink, beide Richtungen); sind beide Apps auf derselben Origin offen, zieht die Schwester beim Stück-Laden automatisch nach (localStorage-Event `diato.nowPlaying`).
 
 **Bedienung & Teilen**
-- Einklappbares Einstellungs-Panel (mehr Platz für die Noten auf dem iPhone).
+- Einklappbares Einstellungs-Panel (mehr Platz für die Noten auf dem iPhone) — **Zoom und Tempo sitzen bewusst außerhalb** als Slider in der immer sichtbaren Werkzeugleiste, da sie beim Üben laufend gebraucht werden.
 - Vollständige Persistenz: Layout, Optionen, Zoom, geladene Partitur und getroffene Auswahl überleben einen Browser-Neustart.
 - „Alles zurücksetzen" für einen kompletten, sauberen Neustart.
 - Teilen-Button (natives iOS-Teilen-Menü bzw. Link in die Zwischenablage) und QR-Code zum schnellen Weitergeben.

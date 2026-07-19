@@ -154,6 +154,7 @@
   <div class="ctl"><label id="lblSol"></label><select id="sensSol"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
   <div class="ctl"><label id="lblFa"></label><select id="sensFa"><option value="3" selected></option><option value="1"></option><option value="2"></option></select></div>
   <div class="ctl row"><input type="checkbox" id="onePoss" /><label for="onePoss" id="lblOne" style="text-transform:none"></label></div>
+  <div class="ctl row"><input type="checkbox" id="hideOverlay" /><label for="hideOverlay" id="lblHideOverlay" style="text-transform:none"></label></div>
   <div class="ctl"><label>&nbsp;</label><button id="btnShare">🔗 <span id="lblShare"></span></button></div>
   <div class="ctl"><label>&nbsp;</label><button id="btnQR">▦ <span id="lblQR"></span></button></div>
   <div class="ctl"><label>&nbsp;</label><button id="btnPrint">🖨 <span id="lblPrint"></span></button></div>
@@ -214,7 +215,7 @@ const STR = {
     share_title:"Soufflet — D.E.S.-Tablatur fürs Diato",
     tagline: "MusicXML / .mxl rein → Knopf-Tablatur über den Noten. Alles bleibt lokal im Browser. Tippe eine Variante an, um sie zu wählen. · Offene Fortschreibung von DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Sprache", lbl_score:"Partitur (.mxl / .musicxml / .xml)", lbl_rh:"Rechte Hand (Layout)", lbl_lh:"Linke Hand / Bass (Layout)",
-    lbl_custom:"Eigenes .keyboard laden", lbl_play:"Spielweise", lbl_sol:"SOL-Akkord", lbl_fa:"FA-Akkord", lbl_one:"nur eine Möglichkeit", lbl_zoom:"Zoom",
+    lbl_custom:"Eigenes .keyboard laden", lbl_play:"Spielweise", lbl_sol:"SOL-Akkord", lbl_fa:"FA-Akkord", lbl_one:"nur eine Möglichkeit", lbl_hide_overlay:"D.E.S. ausblenden", lbl_zoom:"Zoom",
     play_cross:"Kreuzweise (Akkord bestimmt Richtung)", play_g:"Einreihig — G-Reihe", play_c:"Einreihig — C-Reihe",
     sens_both:"beide", sens_pull:"nur Zug", sens_push:"nur Druck", btn_reset:"Alles zurücksetzen", file_choose:"Datei auswählen",
     tip_pull:"Zug", tip_push:"Druck",
@@ -246,7 +247,7 @@ const STR = {
     share_title:"Soufflet — tablature D.E.S. pour accordéon diatonique",
     tagline: "MusicXML / .mxl en entrée → tablature à boutons au-dessus des notes. Tout reste local dans le navigateur. Touche une variante pour la choisir. · Continuation libre de DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Langue", lbl_score:"Partition (.mxl / .musicxml / .xml)", lbl_rh:"Main droite (plan)", lbl_lh:"Main gauche / basses (plan)",
-    lbl_custom:"Charger un .keyboard", lbl_play:"Jeu", lbl_sol:"Accord SOL", lbl_fa:"Accord FA", lbl_one:"une seule possibilité", lbl_zoom:"Zoom",
+    lbl_custom:"Charger un .keyboard", lbl_play:"Jeu", lbl_sol:"Accord SOL", lbl_fa:"Accord FA", lbl_one:"une seule possibilité", lbl_hide_overlay:"Masquer D.E.S.", lbl_zoom:"Zoom",
     play_cross:"Croisé (l'accord détermine le sens)", play_g:"En ligne — rang de G", play_c:"En ligne — rang de C",
     sens_both:"les deux", sens_pull:"tiré seul", sens_push:"poussé seul", btn_reset:"Tout réinitialiser", file_choose:"Choisir un fichier",
     tip_pull:"Tiré", tip_push:"Poussé",
@@ -278,7 +279,7 @@ const STR = {
     share_title:"Soufflet — D.E.S. tablature for diatonic accordion",
     tagline: "MusicXML / .mxl in → button tablature above the notes. Everything stays local in the browser. Tap a variant to choose it. · Open continuation of DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Language", lbl_score:"Score (.mxl / .musicxml / .xml)", lbl_rh:"Right hand (layout)", lbl_lh:"Left hand / bass (layout)",
-    lbl_custom:"Load a .keyboard", lbl_play:"Playing style", lbl_sol:"SOL chord", lbl_fa:"FA chord", lbl_one:"one option only", lbl_zoom:"Zoom",
+    lbl_custom:"Load a .keyboard", lbl_play:"Playing style", lbl_sol:"SOL chord", lbl_fa:"FA chord", lbl_one:"one option only", lbl_hide_overlay:"Hide D.E.S.", lbl_zoom:"Zoom",
     play_cross:"Cross-row (chord sets direction)", play_g:"Single row — G row", play_c:"Single row — C row",
     sens_both:"both", sens_pull:"pull only", sens_push:"push only", btn_reset:"Reset everything", file_choose:"Choose file",
     tip_pull:"Pull", tip_push:"Push",
@@ -310,7 +311,7 @@ const STR = {
     share_title:"Soufflet — intavolatura D.E.S. per fisarmonica diatonica",
     tagline: "MusicXML / .mxl in entrata → intavolatura a bottoni sopra le note. Tutto resta locale nel browser. Tocca una variante per sceglierla. · Continuazione libera di DiatonicTab (J.-M. Bencetti, GPL-2.0).",
     lbl_lang:"Lingua", lbl_score:"Partitura (.mxl / .musicxml / .xml)", lbl_rh:"Mano destra (schema)", lbl_lh:"Mano sinistra / bassi (schema)",
-    lbl_custom:"Carica un .keyboard", lbl_play:"Esecuzione", lbl_sol:"Accordo SOL", lbl_fa:"Accordo FA", lbl_one:"una sola possibilità", lbl_zoom:"Zoom",
+    lbl_custom:"Carica un .keyboard", lbl_play:"Esecuzione", lbl_sol:"Accordo SOL", lbl_fa:"Accordo FA", lbl_one:"una sola possibilità", lbl_hide_overlay:"Nascondi D.E.S.", lbl_zoom:"Zoom",
     play_cross:"Incrociato (l'accordo determina il verso)", play_g:"In fila — fila di G", play_c:"In fila — fila di C",
     sens_both:"entrambi", sens_pull:"solo tirando", sens_push:"solo spingendo", btn_reset:"Ripristina tutto", file_choose:"Scegli un file",
     tip_pull:"Tirando", tip_push:"Spingendo",
@@ -355,7 +356,7 @@ function applyI18n() {
   $("lblRH").textContent = T.lbl_rh; $("lblLH").textContent = T.lbl_lh; $("lblCustom").textContent = T.lbl_custom; $("lblVoice").textContent = T.lbl_voice;
   for (const opt of $("voiceSel").options) opt.textContent = T.voice_opt(opt.value);
   $("lblPlay").textContent = T.lbl_play; $("lblSol").textContent = T.lbl_sol; $("lblFa").textContent = T.lbl_fa;
-  $("lblOne").textContent = T.lbl_one; $("lblZoom").textContent = T.lbl_zoom; $("lblTempo").textContent = T.lbl_tempo;
+  $("lblOne").textContent = T.lbl_one; $("lblHideOverlay").textContent = T.lbl_hide_overlay; $("lblZoom").textContent = T.lbl_zoom; $("lblTempo").textContent = T.lbl_tempo;
   const pj = $("typeJeu"); pj.options[0].textContent = T.play_cross; pj.options[1].textContent = T.play_g; pj.options[2].textContent = T.play_c;
   for (const id of ["sensSol","sensFa"]) { const s = $(id); s.options[0].textContent = T.sens_both; s.options[1].textContent = T.sens_pull; s.options[2].textContent = T.sens_push; }
   $("resetSel").textContent = T.btn_reset;
@@ -384,7 +385,7 @@ function saveState() {
   const base = {
     lang, rh: $("rhSel").value, lh: $("lhSel").value,
     typeJeu: $("typeJeu").value, sensSol: $("sensSol").value, sensFa: $("sensFa").value,
-    onePoss: $("onePoss").checked, zoom: $("zoom").value, voice: $("voiceSel").value,
+    onePoss: $("onePoss").checked, hideOverlay: $("hideOverlay").checked, zoom: $("zoom").value, voice: $("voiceSel").value,
     scoreName: $("btnScore").classList.contains("has-file") ? $("btnScore").textContent : "",
     selections: Object.fromEntries(selections),
   };
@@ -393,7 +394,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
-const APP_VERSION = "1.4.1";   // bei jedem Deploy hier bumpen — einzige Stelle
+const APP_VERSION = "1.5.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map(), lastTempo = 120;
@@ -442,6 +443,7 @@ function populateVoiceSelector(voices) {
     if (saved.sensSol) $("sensSol").value = saved.sensSol;
     if (saved.sensFa)  $("sensFa").value  = saved.sensFa;
     if (typeof saved.onePoss === "boolean") $("onePoss").checked = saved.onePoss;
+    if (typeof saved.hideOverlay === "boolean") $("hideOverlay").checked = saved.hideOverlay;
     if (saved.zoom) { $("zoom").value = saved.zoom; $("zoomVal").textContent = Math.round(Number(saved.zoom) * 100) + "%"; }
     if (saved.selections) for (const [k,v] of Object.entries(saved.selections)) selections.set(Number(k), v);
   }
@@ -605,6 +607,7 @@ function placeOverlay() {
     const x = se.PositionAndShape.AbsolutePosition.x * U;
     const yTop = gm.PositionAndShape.AbsolutePosition.y * U;
     notePositions.push({ x, yTop, startSec: ev.startSec, durationSec: ev.durationSec, measure: ev.measure });
+    if ($("hideOverlay").checked) continue;
     if (!ev.des || ev.des.length === 0) continue;
     const chordHeadroom = ev.chordChange ? 2.2 * U : 0;   // weicht über Akkordsymbolen (z.B. "Am") nach oben aus
     const div = document.createElement("div");
@@ -839,6 +842,7 @@ wireFileButton("btnCustom", "fileCustom", async (f) => {
   } catch (err) { setStatus(L().st_layout_err(err.message), true); }
 });
 ["typeJeu","sensSol","sensFa","onePoss"].forEach(id => $(id).addEventListener("change", () => { selections.clear(); placeOverlay(); saveState(); }));
+$("hideOverlay").addEventListener("change", () => { placeOverlay(); saveState(); });
 let zoomRenderT;
 $("zoom").addEventListener("input", () => {
   $("zoomVal").textContent = Math.round(Number($("zoom").value) * 100) + "%";
@@ -862,7 +866,7 @@ $("resetSel").addEventListener("click", () => {
   try { localStorage.removeItem(LS_KEY); } catch {}
   selections.clear(); currentXml = null;
   $("typeJeu").value = "3"; $("sensSol").value = "3"; $("sensFa").value = "3";
-  $("onePoss").checked = false; $("zoom").value = "0.9"; $("tempoRate").value = "1";
+  $("onePoss").checked = false; $("hideOverlay").checked = false; $("zoom").value = "0.9"; $("tempoRate").value = "1";
   $("zoomVal").textContent = "90%"; $("tempoVal").textContent = "100%";
   if (bundle) {
     $("rhSel").value = bundle.defaults.rh; $("lhSel").value = bundle.defaults.lh;

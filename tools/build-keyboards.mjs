@@ -35,6 +35,16 @@ for (const f of files) {
 }
 bundle.index.sort((a,b) =>
   a.kind.localeCompare(b.kind) || a.tonalite.localeCompare(b.tonalite) || a.description.localeCompare(b.description));
-fs.writeFileSync(outFile, JSON.stringify(bundle, null, 1));
 const rh = bundle.index.filter(e=>e.kind==="rh").length, lh = bundle.index.length - rh;
-console.log(`keyboards.json geschrieben: ${rh} RH + ${lh} LH = ${bundle.index.length} Layouts (${fs.statSync(outFile).size} B)`);
+
+// "generated" nur fortschreiben, wenn sich der übrige Inhalt geändert hat —
+// sonst Datei unangetastet lassen (kein Datums-Diff bei jedem Deploy).
+const withoutDate = b => JSON.stringify({ ...b, generated: undefined });
+let old = null;
+try { old = JSON.parse(fs.readFileSync(outFile, "utf8")); } catch {}   // fehlt/kaputt -> neu schreiben
+if (old && withoutDate(old) === withoutDate(bundle)) {
+  console.log(`keyboards.json unverändert: ${rh} RH + ${lh} LH = ${bundle.index.length} Layouts (generated bleibt ${old.generated})`);
+} else {
+  fs.writeFileSync(outFile, JSON.stringify(bundle, null, 1));
+  console.log(`keyboards.json geschrieben: ${rh} RH + ${lh} LH = ${bundle.index.length} Layouts (${fs.statSync(outFile).size} B)`);
+}

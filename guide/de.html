@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Soufflet – Bedienungsanleitung</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<style>
+:root{--bg:#f3f1ec;--card:#fbfaf7;--inset:#e6e1d6;--txt:#1d1b18;--txt2:#7a7266;--accent:#0a7aff;--ann:#ff6b00}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.9em}
+.top a{color:var(--accent);text-decoration:none}
+.lang a{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--card);border:1px solid var(--inset);margin-left:4px}
+.lang a.on{background:var(--accent);color:#fff}
+h1{font-size:1.7em;margin:18px 0 2px;letter-spacing:-.01em}
+.sub{color:var(--txt2);font-size:.78em;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+nav.toc a{border:1px solid var(--inset);background:var(--card);color:var(--txt);text-decoration:none;padding:6px 12px;border-radius:16px;font-size:.88em}
+section{background:var(--card);border:1px solid var(--inset);border-radius:12px;padding:16px 18px 18px;margin:14px 0;scroll-margin-top:12px}
+h2{font-size:1.2em;margin:2px 0 6px}
+.lead{color:var(--txt2);margin:0 0 12px}
+figure{margin:0 0 12px}
+figure a{display:block}
+figure img{display:block;width:100%;height:auto;border-radius:10px;background:#fff;border:1px solid var(--inset)}
+figcaption{font-size:.75em;color:var(--txt2);margin-top:4px}
+ol.ann{list-style:none;counter-reset:n;padding:0;margin:0}
+ol.ann li{counter-increment:n;position:relative;padding:5px 0 5px 38px;border-top:1px solid var(--inset)}
+ol.ann li:first-child{border-top:0}
+ol.ann li::before{content:counter(n);position:absolute;left:0;top:6px;width:26px;height:26px;border-radius:50%;background:var(--ann);color:#fff;font-weight:700;font-size:.82em;display:flex;align-items:center;justify-content:center}
+table{width:100%;border-collapse:collapse;margin:12px 0 0;font-size:.95em}
+th,td{text-align:left;padding:7px 10px;border-top:1px solid var(--inset);vertical-align:top}
+th{color:var(--txt2);font-weight:600;font-size:.85em;border-top:0}
+td:first-child{white-space:nowrap;font-weight:600}
+.note{font-size:.9em;color:var(--txt2);margin:12px 0 0}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px;border:2px solid transparent}
+footer{color:var(--txt3,#636366);font-size:.8em;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><a href="../">← Zurück zu Soufflet</a><span class="lang"><a href="index.html">EN</a><a href="de.html" class=on>DE</a></span></div>
+<h1>Soufflet – Bedienungsanleitung</h1>
+<div class="sub">MusicXML → Knopf-Tabulatur</div>
+<nav class="toc"><a href="#settings">1 · Einstellungen</a><a href="#score">2 · Noten &amp; Wiedergabe</a><a href="#repertoire">3 · Repertoire</a></nav>
+<section id="settings">
+<h2>1 · Einstellungen</h2>
+<p class="lead">Partitur laden, Instrument einstellen – Soufflet schreibt die Knopf-Tabulatur über die Noten. Alles bleibt lokal im Browser.</p>
+<figure><a href="img/01-settings-de.webp"><img src="img/01-settings-de.webp" alt="Einstellungen mit nummerierten Bedienelementen" width="2470" height="2592" loading="lazy" decoding="async"></a><figcaption>Bild antippen zum Vergrößern.</figcaption></figure>
+<ol class="ann"><li><b>Hilfe</b> – öffnet die Kurzhilfe (eigene Seite, nur auf Deutsch); von dort geht es auch zu dieser Anleitung.</li><li><b>Sprache</b> – DE · FR · IT · EN; die Wahl wird gespeichert.</li><li><b>Einstellungen</b> – ein- und ausklappen. Aufgeklappt steht rechts „ausblenden“, eingeklappt „Layout &amp; Partitur ✓“, sobald eine Partitur geladen ist (sonst „einblenden“). Beim Laden einer Partitur klappt das Panel automatisch zu.</li><li><b>Partitur</b> – MusicXML-Datei öffnen (.mxl, .musicxml, .xml).</li><li><b>Eigenes .keyboard</b> – eigene Belegung im Format von DiatonicTab laden (JSON-Datei mit der Endung .keyboard). Soufflet erkennt selbst, ob es eine Diskant- oder eine Bass-Datei ist.</li><li><b>Rechte Hand</b> – Diskant-Layout, z. B. G/C 2R std, G/C 3R Heim 2, G/C 3R Casta FH1.</li><li><b>Linke Hand / Bass</b> – Bass-Layout, z. B. G/C 8 Bass. Es legt fest, welcher Akkord auf Zug, auf Druck oder in beiden Richtungen liegt.</li><li><b>Spielweise</b> – drei Optionen. „Kreuzweise (Akkord bestimmt Richtung)“: Soufflet schlägt den Grundton des Akkordsymbols im Bass-Layout nach und zeigt nur Knöpfe in dieser Balgrichtung; ohne Akkordsymbol bleiben beide Richtungen stehen. „Einreihig — G-Reihe“ bzw. „Einreihig — C-Reihe“: bevorzugt Knöpfe der ersten bzw. zweiten Reihe, ohne Akkordfilter. Liegt ein Ton nicht auf dieser Reihe, erscheinen die übrigen Varianten.</li><li><b>Sol- / Fa-Akkord</b> – wirkt nur bei „Kreuzweise“ und nur, wenn das Bass-Layout den G- bzw. F-Akkord in beiden Balgrichtungen hat. Dann legt man fest: „beide“, „nur Zug“ oder „nur Druck“.</li><li><b>Nur eine Möglichkeit</b> zeigt pro Note nur die erste Tab-Variante; <b>D.E.S. ausblenden</b> blendet die Tabulatur aus.</li><li><b>Teilen</b> (Link), <b>QR-Code</b> (am Handy öffnen), <b>Drucken</b> (Noten mit Tabulatur).</li><li><b>Alles zurücksetzen</b> – setzt Layouts, Optionen, Zoom, Tempo, Partitur und alle gewählten Varianten auf den Ausgangszustand zurück.</li><li><b>Play / Stop</b> – schwebende Knöpfe; sie erscheinen während der Wiedergabe oder Pause und bleiben beim Scrollen erreichbar.</li><li><b>Zu Benny</b> – öffnet die Übungs-App Benny und lädt dort dasselbe Repertoire-Stück. Selbst geladene Dateien werden nicht übergeben.</li><li><b>Statuszeile</b> – aktive Layouts und Hinweise, z. B. wenn die Partitur keine Akkordsymbole hat (dann folgt die Balgrichtung nur der Spielweise).</li></ol>
+</section>
+<section id="score">
+<h2>2 · Noten &amp; Wiedergabe</h2>
+<p class="lead">Über jeder Note steht der Knopf. Abspielen zeigt mit einer grünen Linie, wo du bist.</p>
+<figure><a href="img/02-score-de.webp"><img src="img/02-score-de.webp" alt="Notenansicht mit nummerierten Bedienelementen" width="2470" height="2357" loading="lazy" decoding="async"></a><figcaption>Bild antippen zum Vergrößern.</figcaption></figure>
+<ol class="ann"><li><b>Abspielen · Stopp</b> – während der Wiedergabe wird „Abspielen“ zu „Pause“; Stopp springt an den Anfang zurück.</li><li><b>Repertoire</b> – Stückliste öffnen (siehe 3).</li><li><b>Zeit</b> – Position / Gesamtdauer.</li><li><b>Zoom</b> – Notengröße, 60 bis 130 %.</li><li><b>Übungstempo</b> – 50 bis 115 % des notierten Tempos, in 5-%-Schritten.</li><li><b>Zu Benny →</b> – wie der schwebende Knopf: öffnet Benny mit demselben Repertoire-Stück.</li><li><b>Tabulatur</b> – Knopfnummer über jeder Note; stehen zwei Zeilen übereinander, sind es zwei Varianten. Antippen wählt eine, die Wahl wird gespeichert. Erneutes Antippen hebt sie wieder auf.</li><li><b>Grün</b> – aktuelle Abspielposition.</li><li><b>Play / Stop</b> – schwebend, während Wiedergabe oder Pause auch beim Scrollen erreichbar.</li></ol>
+<table><thead><tr><th>Zeichen</th><th>Bedeutung</th></tr></thead><tbody><tr><td>5</td><td>Knopf 5 der ersten (äußeren) Reihe</td></tr><tr><td>5'</td><td>Knopf 5 der zweiten Reihe</td></tr><tr><td>5"</td><td>Knopf 5 der dritten Reihe (Anführungszeichen)</td></tr><tr><td><u>5</u></td><td>unterstrichen = Zug</td></tr><tr><td>5</td><td>nicht unterstrichen = Druck</td></tr></tbody></table>
+</section>
+<section id="repertoire">
+<h2>3 · Repertoire</h2>
+<p class="lead">Die kuratierten Stücke, nach Übungsstand gruppiert und innerhalb der Gruppe nach Schwierigkeit sortiert. Antippen lädt das Stück.</p>
+<figure><a href="img/03-repertoire-de.webp"><img src="img/03-repertoire-de.webp" alt="Repertoire-Liste mit nummerierten Elementen" width="2430" height="1350" loading="lazy" decoding="async"></a><figcaption>Bild antippen zum Vergrößern.</figcaption></figure>
+<ol class="ann"><li><b>Schließen</b>.</li><li><b>Suche</b> – filtert nach Titel und Komponist.</li><li><b>Gruppe</b> – Übungsstand „Kann ich“, „In Arbeit“ oder „Neu“, mit Anzahl. Den Stand setzt man in Benny. Soufflet übernimmt ihn, wenn beide Apps unter derselben Adresse laufen (z. B. wdeu.github.io); zwischen soufflet.wdeu.de und benny.wdeu.de wird er nicht geteilt.</li><li><b>Benny-Fit-Ampel</b> – wie gut das Stück aufs Benny passt: der Anteil der Melodietöne, die gegen die vom Akkord vorgegebene Balgrichtung gespielt werden müssen. 🟢 bis 5 %, 🟡 bis 15 %, 🟠 bis 30 %, 🔴 darüber. Dieselbe Bewertung wie in Benny.</li><li><b>Tanzform</b> – z. B. Mazurka, Scottish, Branle.</li><li><b>Titel · Komponist · Tonart · Tempo</b>.</li></ol>
+</section>
+<footer>Soufflet · <a href="https://github.com/wdeu/soufflet" style="color:inherit">GitHub</a> · GPL-2.0</footer>
+</div>
+</body>
+</html>

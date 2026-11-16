@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Soufflet – User Guide</title>
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<style>
+:root{--bg:#f3f1ec;--card:#fbfaf7;--inset:#e6e1d6;--txt:#1d1b18;--txt2:#7a7266;--accent:#0a7aff;--ann:#ff6b00}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.9em}
+.top a{color:var(--accent);text-decoration:none}
+.lang a{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--card);border:1px solid var(--inset);margin-left:4px}
+.lang a.on{background:var(--accent);color:#fff}
+h1{font-size:1.7em;margin:18px 0 2px;letter-spacing:-.01em}
+.sub{color:var(--txt2);font-size:.78em;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+nav.toc a{border:1px solid var(--inset);background:var(--card);color:var(--txt);text-decoration:none;padding:6px 12px;border-radius:16px;font-size:.88em}
+section{background:var(--card);border:1px solid var(--inset);border-radius:12px;padding:16px 18px 18px;margin:14px 0;scroll-margin-top:12px}
+h2{font-size:1.2em;margin:2px 0 6px}
+.lead{color:var(--txt2);margin:0 0 12px}
+figure{margin:0 0 12px}
+figure a{display:block}
+figure img{display:block;width:100%;height:auto;border-radius:10px;background:#fff;border:1px solid var(--inset)}
+figcaption{font-size:.75em;color:var(--txt2);margin-top:4px}
+ol.ann{list-style:none;counter-reset:n;padding:0;margin:0}
+ol.ann li{counter-increment:n;position:relative;padding:5px 0 5px 38px;border-top:1px solid var(--inset)}
+ol.ann li:first-child{border-top:0}
+ol.ann li::before{content:counter(n);position:absolute;left:0;top:6px;width:26px;height:26px;border-radius:50%;background:var(--ann);color:#fff;font-weight:700;font-size:.82em;display:flex;align-items:center;justify-content:center}
+table{width:100%;border-collapse:collapse;margin:12px 0 0;font-size:.95em}
+th,td{text-align:left;padding:7px 10px;border-top:1px solid var(--inset);vertical-align:top}
+th{color:var(--txt2);font-weight:600;font-size:.85em;border-top:0}
+td:first-child{white-space:nowrap;font-weight:600}
+.note{font-size:.9em;color:var(--txt2);margin:12px 0 0}
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px;border:2px solid transparent}
+footer{color:var(--txt3,#636366);font-size:.8em;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><a href="../">← Back to Soufflet</a><span class="lang"><a href="index.html" class=on>EN</a><a href="de.html">DE</a></span></div>
+<h1>Soufflet – User Guide</h1>
+<div class="sub">MusicXML → button tablature</div>
+<nav class="toc"><a href="#settings">1 · Settings</a><a href="#score">2 · Score &amp; playback</a><a href="#repertoire">3 · Repertoire</a></nav>
+<section id="settings">
+<h2>1 · Settings</h2>
+<p class="lead">Load a score, set up your instrument – Soufflet writes the button tablature above the notes. Everything stays local in your browser.</p>
+<figure><a href="img/01-settings-en.webp"><img src="img/01-settings-en.webp" alt="Settings with numbered controls" width="2470" height="2592" loading="lazy" decoding="async"></a><figcaption>Tap the image to zoom.</figcaption></figure>
+<ol class="ann"><li><b>Help</b> – opens the quick help (a separate page, in German only), which also links to this guide.</li><li><b>Language</b> – DE · FR · IT · EN; your choice is remembered.</li><li><b>Settings</b> – expand or collapse. Expanded, the bar shows “hide”; collapsed, it shows “Layout &amp; score ✓” once a score is loaded (otherwise “show”). Loading a score collapses the panel automatically.</li><li><b>Score</b> – open a MusicXML file (.mxl, .musicxml, .xml).</li><li><b>Own .keyboard</b> – load your own layout in DiatonicTab format (a JSON file with the .keyboard extension). Soufflet detects whether it is a treble or a bass file.</li><li><b>Right hand</b> – treble layout, e.g. G/C 2R std, G/C 3R Heim 2, G/C 3R Casta FH1.</li><li><b>Left hand / bass</b> – bass layout, e.g. G/C 8 Bass. It defines which chords sit on pull, on push, or on both.</li><li><b>Playing style</b> – three options. “Cross-row (chord sets direction)”: Soufflet looks up the root of the chord symbol in the bass layout and shows only buttons in that bellows direction; without a chord symbol both directions stay. “Single row — G row” / “Single row — C row”: prefers buttons on the first or second row, with no chord filter. If a note is not on that row, the other variants are shown.</li><li><b>Sol / Fa chord</b> – applies only in cross-row mode, and only if the bass layout has the G or F chord in both bellows directions. You then pick “both”, “pull only” or “push only”.</li><li><b>One option only</b> shows only the first tab variant per note; <b>Hide D.E.S.</b> hides the tablature.</li><li><b>Share</b> (link), <b>QR code</b> (open on a phone), <b>Print</b> (score with tablature).</li><li><b>Reset everything</b> – resets layouts, options, zoom, tempo, the score and all chosen variants.</li><li><b>Play / Stop</b> – floating buttons; they appear while playing or paused and stay reachable while you scroll.</li><li><b>To Benny</b> – opens the Benny practice app and loads the same repertoire piece there. Files you loaded yourself are not handed over.</li><li><b>Status line</b> – active layouts and notes, e.g. when the score has no chord symbols (bellows direction then follows the playing style only).</li></ol>
+</section>
+<section id="score">
+<h2>2 · Score &amp; playback</h2>
+<p class="lead">Each note shows its button above it. During playback a green line marks where you are.</p>
+<figure><a href="img/02-score-en.webp"><img src="img/02-score-en.webp" alt="Score view with numbered controls" width="2470" height="2357" loading="lazy" decoding="async"></a><figcaption>Tap the image to zoom.</figcaption></figure>
+<ol class="ann"><li><b>Play · Stop</b> – during playback “Play” turns into “Pause”; Stop returns to the beginning.</li><li><b>Repertoire</b> – open the piece list (see 3).</li><li><b>Time</b> – position / total length.</li><li><b>Zoom</b> – score size, 60 to 130 %.</li><li><b>Practice tempo</b> – 50 to 115 % of the written tempo, in 5 % steps.</li><li><b>To Benny →</b> – same as the floating button: opens Benny with the same repertoire piece.</li><li><b>Tablature</b> – button number above each note; two stacked lines are two variants. Tap one to choose it; the choice is saved. Tap it again to clear it.</li><li><b>Green</b> – current playback position.</li><li><b>Play / Stop</b> – floating, reachable while scrolling during playback or pause.</li></ol>
+<table><thead><tr><th>Sign</th><th>Meaning</th></tr></thead><tbody><tr><td>5</td><td>button 5 of the first (outer) row</td></tr><tr><td>5'</td><td>button 5 of the second row</td></tr><tr><td>5"</td><td>button 5 of the third row (double quote)</td></tr><tr><td><u>5</u></td><td>underlined = pull</td></tr><tr><td>5</td><td>not underlined = push</td></tr></tbody></table>
+</section>
+<section id="repertoire">
+<h2>3 · Repertoire</h2>
+<p class="lead">The curated pieces, grouped by practice status and sorted by difficulty within each group. Tap a piece to load it.</p>
+<figure><a href="img/03-repertoire-en.webp"><img src="img/03-repertoire-en.webp" alt="Repertoire list with numbered elements" width="2430" height="1350" loading="lazy" decoding="async"></a><figcaption>Tap the image to zoom.</figcaption></figure>
+<ol class="ann"><li><b>Close</b>.</li><li><b>Search</b> – filters by title and composer.</li><li><b>Group</b> – practice status “Can play”, “In progress” or “New”, with count (the screenshot shows the German interface). You set the status in Benny. Soufflet picks it up when both apps run under the same address (e.g. wdeu.github.io); it is not shared between soufflet.wdeu.de and benny.wdeu.de.</li><li><b>Benny-fit rating</b> – how well the piece suits the Benny: the share of melody notes that must be played against the bellows direction the chord sets. 🟢 up to 5 %, 🟡 up to 15 %, 🟠 up to 30 %, 🔴 above. The same rating as in Benny.</li><li><b>Dance form</b> – e.g. mazurka, scottish, branle.</li><li><b>Title · composer · key · tempo</b>.</li></ol>
+</section>
+<footer>Soufflet · <a href="https://github.com/wdeu/soufflet" style="color:inherit">GitHub</a> · GPL-2.0</footer>
+</div>
+</body>
+</html>

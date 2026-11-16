@@ -195,7 +195,7 @@
 </div>
 <button class="sister-btn" id="sisterBtn" title="Gleiches Stück in Benny (Play-Along)">⇄ 🪗 <span id="lblSister"></span></button>
 <div id="status"></div>
-<footer class="legal"><a href="hilfe.html">Hilfe</a> · <a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
+<footer class="legal"><a href="hilfe.html">Hilfe</a> · <a href="guide/" id="guideLink" target="_blank" rel="noopener"></a> · <a href="impressum.html" id="lblImpressum"></a> · <span id="verSpan"></span></footer>
 
 <script type="module">
 import { parseKeyboard }   from "./des.js";
@@ -208,7 +208,7 @@ import { createCtx, playMelodyNote, playBassChord, stopAllNodes, noteToFrequency
 const STR = {
   de: {
     lbl_panel:"Einstellungen", panel_open:"ausblenden", panel_closed:n=>n?"Layout & Partitur ✓":"einblenden",
-    lbl_share:"Teilen", lbl_qr:"QR-Code", lbl_benny:"Zu Benny", lbl_impressum:"Impressum",
+    lbl_share:"Teilen", lbl_qr:"QR-Code", lbl_benny:"Zu Benny", lbl_impressum:"Impressum", lbl_guide:"Ausführliche Anleitung",
     lbl_rep:"Repertoire", rep_search:"Suchen …", rep_empty:"Nichts gefunden.",
     rep_err:"Repertoire nicht erreichbar", rep_groups:{kannIch:"Kann ich",inArbeit:"In Arbeit",neu:"Neu"},
     st_piece_missing:"Stück nicht im Repertoire", st_not_in_rep:"Stück nicht im Repertoire — nicht übergeben",
@@ -240,7 +240,7 @@ const STR = {
   },
   fr: {
     lbl_panel:"Réglages", panel_open:"masquer", panel_closed:n=>n?"Plan & partition ✓":"afficher",
-    lbl_share:"Partager", lbl_qr:"Code QR", lbl_benny:"Vers Benny", lbl_impressum:"Mentions légales",
+    lbl_share:"Partager", lbl_qr:"Code QR", lbl_benny:"Vers Benny", lbl_impressum:"Mentions légales", lbl_guide:"Mode d’emploi",
     lbl_rep:"Répertoire", rep_search:"Rechercher …", rep_empty:"Rien trouvé.",
     rep_err:"Répertoire indisponible", rep_groups:{kannIch:"Je sais jouer",inArbeit:"En cours",neu:"Nouveau"},
     st_piece_missing:"Morceau introuvable dans le répertoire", st_not_in_rep:"Morceau hors répertoire — non transmis",
@@ -272,7 +272,7 @@ const STR = {
   },
   en: {
     lbl_panel:"Settings", panel_open:"hide", panel_closed:n=>n?"Layout & score ✓":"show",
-    lbl_share:"Share", lbl_qr:"QR code", lbl_benny:"To Benny", lbl_impressum:"Legal notice",
+    lbl_share:"Share", lbl_qr:"QR code", lbl_benny:"To Benny", lbl_impressum:"Legal notice", lbl_guide:"User guide",
     lbl_rep:"Repertoire", rep_search:"Search …", rep_empty:"Nothing found.",
     rep_err:"Repertoire unavailable", rep_groups:{kannIch:"Can play",inArbeit:"In progress",neu:"New"},
     st_piece_missing:"Piece not in repertoire", st_not_in_rep:"Piece not in repertoire — not handed over",
@@ -304,7 +304,7 @@ const STR = {
   },
   it: {
     lbl_panel:"Impostazioni", panel_open:"nascondi", panel_closed:n=>n?"Schema e partitura ✓":"mostra",
-    lbl_share:"Condividi", lbl_qr:"Codice QR", lbl_benny:"Vai a Benny", lbl_impressum:"Note legali",
+    lbl_share:"Condividi", lbl_qr:"Codice QR", lbl_benny:"Vai a Benny", lbl_impressum:"Note legali", lbl_guide:"Guida",
     lbl_rep:"Repertorio", rep_search:"Cerca …", rep_empty:"Niente trovato.",
     rep_err:"Repertorio non disponibile", rep_groups:{kannIch:"So suonare",inArbeit:"In corso",neu:"Nuovo"},
     st_piece_missing:"Brano non nel repertorio", st_not_in_rep:"Brano non nel repertorio — non trasferito",
@@ -367,6 +367,7 @@ function applyI18n() {
   $("lblPlay2").textContent = T.lbl_play2; $("lblStop").textContent = T.lbl_stop;
   setTransportUI();
   $("lblBenny").textContent = T.lbl_benny; $("lblImpressum").textContent = T.lbl_impressum;
+  $("guideLink").textContent = T.lbl_guide; $("guideLink").href = lang === "de" ? "guide/de.html" : "guide/";   // relativ: GitHub Pages + IONOS
   $("lblRep").textContent = T.lbl_rep; $("repTitle").textContent = "📚 " + T.lbl_rep;
   $("lblSister").textContent = T.lbl_benny;
   $("repSearch").placeholder = T.rep_search;
@@ -394,7 +395,7 @@ function saveState() {
 }
 const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch { return null; } };
 
-const APP_VERSION = "1.5.0";   // bei jedem Deploy hier bumpen — einzige Stelle
+const APP_VERSION = "1.6.0";   // bei jedem Deploy hier bumpen — einzige Stelle
 let osmd = null, bundle = null;
 let notePositions = [];           // {x, yTop, startSec, durationSec, measure} — eine Quelle für D.E.S.-Positionierung UND Wiedergabe
 let lastTab = [], lastAudioBass = new Map(), lastTempo = 120;

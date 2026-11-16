@@ -4,6 +4,8 @@
 
 🔗 **Live: [wdeu.github.io/soufflet](https://wdeu.github.io/soufflet/)**
 
+📖 **Bedienungsanleitung mit bebilderten Bedienelementen: [Deutsch](https://wdeu.github.io/soufflet/guide/de.html) · [English](https://wdeu.github.io/soufflet/guide/)**
+
 Offene, GPL-2.0-lizenzierte Fortschreibung von [Jean-Michel Bencettis](https://jmi.ovh/DiatonicTab) DiatonicTab-Plugins für MuseScore — als eigenständige Web-App, ohne Installation, ohne MuseScore, auf jedem Gerät mit Browser.
 
 ![Soufflet und Benny Accordion nebeneinander, synchronisiert auf dasselbe Repertoire-Stück](screenshots/sync-benny-soufflet.png)
@@ -84,6 +86,10 @@ keyboards.json            — gebündelte 26 Layouts (RH+LH)
 package.json
 impressum.html
 hilfe.html                — Kurzanleitung (siehe Menüpunkt „?")
+guide/                    — ausführliche Bedienungsanleitung: index.html (EN), de.html (DE),
+                            img/*.webp (annotierte iPhone-Screenshots); verlinkt aus
+                            Footer und hilfe.html
+CHANGELOG.md
 site.webmanifest, *.png   — Favicon/Homescreen-Icons, og-image.png (Sharing-Vorschau)
 .ionos-overrides/         — Dateien, die NUR auf soufflet.wdeu.de anders sein sollen
                             (z. B. weiß gerahmte Homescreen-Icons zur Unterscheidung
